@@ -4,22 +4,40 @@ const {
 } = require("./subjectMapping");
 
 const previousSubject =
-    "Database Management Systems";
+    "Data Structures and Algorithms";
 
 const currentSubject =
-    "Database Management";
+    "Algorithms and Data Structures";
 
-const similarity = calculateSimilarity(
-    previousSubject,
+const similarity =
+    calculateSimilarity(
+        previousSubject,
+        currentSubject
+    );
+
+const result =
+    getMappingStatus(similarity);
+
+console.log(
+    "Previous Subject:",
+    previousSubject
+);
+
+console.log(
+    "Current Subject:",
     currentSubject
 );
 
-const result = getMappingStatus(similarity);
+console.log(
+    "Similarity:",
+    similarity + "%"
+);
 
-console.log("Previous Subject:", previousSubject);
-console.log("Current Subject:", currentSubject);
-console.log("Similarity:", similarity + "%");
-console.log("Mapping Status:", result.status);
+console.log(
+    "Mapping Status:",
+    result.status
+);
+
 console.log(
     "Recommendation:",
     result.recommendation

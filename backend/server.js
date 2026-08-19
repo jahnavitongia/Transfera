@@ -9,6 +9,9 @@ const testRoutes = require("./routes/testRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const transferRoutes = require("./routes/transferRoutes");
 const mappingRoutes = require("./routes/mappingRoutes");
+const subjectRoutes = require("./routes/subjectRoutes");
+const previousSubjectRoutes =
+    require("./routes/previousSubjectRoutes");
 
 const app = express();
 
@@ -25,6 +28,11 @@ app.use("/api/test", testRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/transfers", transferRoutes);
 app.use("/api/mappings", mappingRoutes);
+app.use("/api/subjects", subjectRoutes);
+app.use(
+    "/api/previous-subjects",
+    previousSubjectRoutes
+);
 
 // Test route
 app.get("/", (req, res) => {

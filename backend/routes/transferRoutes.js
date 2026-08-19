@@ -1,3 +1,9 @@
+const {
+    evaluateTransfer
+} = require(
+    "../controllers/transferEvaluationController"
+);
+
 const express = require("express");
 
 const {
@@ -14,6 +20,12 @@ const router = express.Router();
 router.post("/", protect, createTransfer);
 
 router.get("/", protect, getTransfers);
+
+router.post(
+    "/:transferId/evaluate",
+    protect,
+    evaluateTransfer
+);
 
 router.get("/:id", protect, getTransferById);
 

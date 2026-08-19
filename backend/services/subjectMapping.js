@@ -1,32 +1,97 @@
-const calculateSimilarity = (previousSubject, currentSubject) => {
+const natural = require("natural");
 
-    const previousWords = previousSubject
-        .toLowerCase()
-        .split(/\s+/);
+const TfIdf = natural.TfIdf;
 
-    const currentWords = currentSubject
-        .toLowerCase()
-        .split(/\s+/);
+// ==========================================
+// CALCULATE TF-IDF COSINE SIMILARITY
+// ==========================================
 
-    const commonWords = previousWords.filter(word =>
-        currentWords.includes(word)
+const calculateSimilarity = (
+    previousSubject,
+    currentSubject
+) => {
+
+    const tfidf = new TfIdf();
+
+    tfidf.addDocument(
+        previousSubject.toLowerCase()
     );
 
-    const uniqueWords = new Set([
-        ...previousWords,
-        ...currentWords
+    tfidf.addDocument(
+        currentSubject.toLowerCase()
+    );
+
+    const previousVector = {};
+    const currentVector = {};
+
+    // --------------------------------------
+    // Build TF-IDF vector for previous subject
+    // --------------------------------------
+
+    tfidf.listTerms(0).forEach(item => {
+        previousVector[item.term] = item.tfidf;
+    });
+
+    // --------------------------------------
+    // Build TF-IDF vector for current subject
+    // --------------------------------------
+
+    tfidf.listTerms(1).forEach(item => {
+        currentVector[item.term] = item.tfidf;
+    });
+
+    // --------------------------------------
+    // Get all unique terms
+    // --------------------------------------
+
+    const terms = new Set([
+        ...Object.keys(previousVector),
+        ...Object.keys(currentVector)
     ]);
 
-    if (uniqueWords.size === 0) {
+    let dotProduct = 0;
+    let previousMagnitude = 0;
+    let currentMagnitude = 0;
+
+    terms.forEach(term => {
+
+        const previousValue =
+            previousVector[term] || 0;
+
+        const currentValue =
+            currentVector[term] || 0;
+
+        dotProduct +=
+            previousValue * currentValue;
+
+        previousMagnitude +=
+            previousValue * previousValue;
+
+        currentMagnitude +=
+            currentValue * currentValue;
+    });
+
+    if (
+        previousMagnitude === 0 ||
+        currentMagnitude === 0
+    ) {
         return 0;
     }
 
     const similarity =
-        (commonWords.length / uniqueWords.size) * 100;
+        dotProduct /
+        (
+            Math.sqrt(previousMagnitude) *
+            Math.sqrt(currentMagnitude)
+        );
 
-    return Math.round(similarity);
+    return Math.round(similarity * 100);
 };
 
+
+// ==========================================
+// DETERMINE MAPPING STATUS
+// ==========================================
 
 const getMappingStatus = (similarity) => {
 
