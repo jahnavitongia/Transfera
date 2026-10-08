@@ -4,6 +4,8 @@ A working local demo for student transfers and admission cancellation. Students 
 
 **Stack:** React/Vite, Express/Node, MongoDB/Mongoose, JWT and bcrypt. All demo records are fictional. AI is future scope; ABC ID is excluded.
 
+Mac teammates: follow [the beginner Mac setup guide](TEAMMATE_SETUP_MAC.md). It supports Intel and Apple Silicon on macOS 14 or later.
+
 ## Windows setup
 
 Download `main` and extract it in any folder you choose. Open PowerShell in the folder containing this README, then run:

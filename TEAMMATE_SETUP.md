@@ -1,5 +1,7 @@
 # Run Transfera on Windows
 
+Using a Mac? Follow [the Mac setup guide](TEAMMATE_SETUP_MAC.md).
+
 Use Windows 10/11 x64, about 3 GB free on your chosen drive, and internet for the first setup. No Git, Node, MongoDB, IDE or cloud account needs to be installed beforehand.
 
 1. Open https://github.com/jahnavitongia/Transfera. Select **main → Code → Download ZIP**. Choose any folder on your laptop. Save the ZIP there and extract it.

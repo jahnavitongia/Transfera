@@ -11,7 +11,7 @@ const check = (ok, message) => { if (!ok) throw new Error(message); console.log(
     mongoose = require(path.join(root, "backend/node_modules/mongoose"));
     dotenv = require(path.join(root, "backend/node_modules/dotenv"));
     if (!fs.existsSync(path.join(root, "frontend/node_modules/vite/bin/vite.js"))) throw new Error("Vite is missing");
-  } catch { throw new Error("Dependencies are missing. Run Setup-Windows.ps1 or npm run setup."); }
+  } catch { throw new Error("Dependencies are missing. Run your Windows/Mac setup script or npm run setup."); }
   check(fs.existsSync(path.join(root, "backend/.env")), "backend/.env exists; otherwise run npm run init:demo");
   dotenv.config({ path: path.join(root, "backend/.env"), quiet: true });
   check(Boolean(process.env.MONGO_URI && process.env.JWT_SECRET && process.env.JWT_SECRET !== "replace-with-a-long-random-secret"), "Database URL and a non-placeholder secret are configured");
