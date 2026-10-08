@@ -12,7 +12,7 @@ const StatCard = ({ label, value, tone, icon }) => (
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [data, setData] = useState({ students: [], transfers: [], subjects: [] });
+  const [data, setData] = useState({ students: [], transfers: [], cancellations: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -20,13 +20,13 @@ const Dashboard = () => {
     let active = true;
     const loadData = async () => {
       try {
-        const [students, transfers, subjects] = await Promise.all([
-          get("/students"), get("/transfers"), get("/subjects"),
+        const [students, transfers, cancellations] = await Promise.all([
+          get("/students"), get("/transfers"), get("/cancellations"),
         ]);
         if (active) setData({
           students: students.data.students || [],
           transfers: transfers.data.transfers || [],
-          subjects: subjects.data.subjects || [],
+          cancellations: cancellations.data.cancellations || [],
         });
       } catch (requestError) {
         if (active) setError(requestError.response?.data?.message || "Unable to load dashboard data.");
@@ -46,7 +46,7 @@ const Dashboard = () => {
   return (
     <div className="dashboard-page">
       <header className="page-header">
-        <div><p className="eyebrow">Overview</p><h1>Welcome, {user.name}</h1><p>Here is what is happening across student transfers today.</p></div>
+        <div><p className="eyebrow">Overview</p><h1>Welcome, {user.name}</h1><p>Here is what is happening across student transfers and cancellations today.</p></div>
         <div className="live-pill"><span /> Demo workspace</div>
       </header>
 
@@ -57,10 +57,11 @@ const Dashboard = () => {
           <section className="stats-grid">
             <StatCard label="Total students" value={data.students.length} tone="blue" icon="◎" />
             <StatCard label="Transfer requests" value={data.transfers.length} tone="violet" icon="↗" />
-            <StatCard label="Active subjects" value={data.subjects.length} tone="green" icon="▤" />
-            <StatCard label="Pending review" value={pending} tone="amber" icon="◷" />
+            <StatCard label="Cancellation requests" value={data.cancellations.length} tone="green" icon="▤" />
+            <StatCard label="Pending review" value={pending + data.cancellations.filter(item => ["pending", "under_review"].includes(item.status)).length} tone="amber" icon="◷" />
           </section>
 
+          <section className="panel details-panel"><div className="section-actions"><h2>Admission cancellations</h2><Link className="table-link" to="/dashboard/cancellations">Review cancellations →</Link></div><p>{data.cancellations.filter(item => ["pending", "under_review"].includes(item.status)).length} awaiting review · {data.cancellations.filter(item => item.status === "approved").length} approved · {data.cancellations.filter(item => item.status === "rejected").length} rejected</p></section>
           <section className="dashboard-grid">
             <article className="panel">
               <div className="panel-heading"><div><h2>Recent transfers</h2><span>Latest activity</span></div><Link to="/dashboard/transfers">View all →</Link></div>

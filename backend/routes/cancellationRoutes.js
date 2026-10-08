@@ -1,0 +1,10 @@
+const router = require("express").Router();
+const protect = require("../middleware/authMiddleware");
+const controller = require("../controllers/cancellationController");
+router.use(protect);
+router.get("/", controller.list);
+router.post("/", protect.allowRoles("student"), controller.create);
+router.get("/:id", controller.detail);
+router.put("/:id/review", protect.allowRoles("staff", "admin"), controller.review);
+router.put("/:id/status", protect.allowRoles("admin"), controller.decide);
+module.exports = router;

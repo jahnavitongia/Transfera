@@ -53,6 +53,8 @@ export default function NewTransfer() {
   };
   if (loading) return <div className="state-card">Loading…</div>;
   if (!profile?.dateOfBirth || !profile.previousStudentId) return <div className="state-card"><p>Complete your profile before submitting a transfer. <Link to="/dashboard/profile">Go to profile →</Link></p>{error && <p role="alert">{error}</p>}</div>;
+  if (profile.admissionStatus === "cancelled" || profile.transferStatus === "completed") return <div className="state-card">Your admission is {profile.admissionStatus}; a new transfer is unavailable for this demo. <Link to="/dashboard">View dashboard →</Link></div>;
+  if (["pending", "under_review"].includes(profile.cancellationStatus)) return <div className="state-card">Complete your active cancellation first. <Link to="/dashboard/cancellations">View cancellation →</Link></div>;
   if (profile.transferStatus === "pending") return <div className="state-card"><p>You already have a transfer under review. <Link to="/dashboard/transfers">View your requests →</Link></p></div>;
   return <div className="dashboard-page">
     <header className="page-header"><div><p className="eyebrow">Step 2</p><h1>New transfer request</h1><p>{profile.previousInstitution} · {profile.previousProgram} → {policy.institution}</p></div></header>

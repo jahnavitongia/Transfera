@@ -6,6 +6,7 @@ const navigation = [
   { label: "Dashboard", to: "/dashboard", icon: "grid" },
   { label: "Students", to: "/dashboard/students", icon: "users" },
   { label: "Transfers", to: "/dashboard/transfers", icon: "transfer" },
+  { label: "Cancellations", to: "/dashboard/cancellations", icon: "transfer" },
   { label: "Subjects", to: "/dashboard/subjects", icon: "book" },
 ];
 
@@ -21,7 +22,7 @@ const Layout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const items = user.role === "student" ? [navigation[0], { label: "Your profile", to: "/dashboard/profile", icon: "users" }, { label: "Your transfers", to: "/dashboard/transfers", icon: "transfer" }] : [...navigation, ...(user.role === "admin" ? [{ label: "Staff accounts", to: "/dashboard/staff", icon: "users" }] : [])];
+  const items = user.role === "student" ? [navigation[0], { label: "Your profile", to: "/dashboard/profile", icon: "users" }, { label: "Your transfers", to: "/dashboard/transfers", icon: "transfer" }, { label: "Your cancellations", to: "/dashboard/cancellations", icon: "transfer" }] : [...navigation, ...(user.role === "admin" ? [{ label: "Staff accounts", to: "/dashboard/staff", icon: "users" }] : [])];
 
   const logout = () => {
     signOut();

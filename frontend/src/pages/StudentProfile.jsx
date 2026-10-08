@@ -20,7 +20,7 @@ export default function StudentProfile() {
       if (data.student) {
         const student = data.student;
         setForm({ phone: student.phone || "", dateOfBirth: student.dateOfBirth?.slice(0, 10) || "", previousStudentId: student.previousStudentId || "", previousInstitution: student.previousInstitution || "", previousProgram: student.previousProgram || "BCA", admissionYear: student.admissionYear });
-        setLocked(student.transferStatus === "pending");
+        setLocked(student.transferStatus === "pending" || ["pending", "under_review"].includes(student.cancellationStatus) || student.admissionStatus === "cancelled");
       }
     }).catch(requestError => { if (active) setError(requestError.response?.data?.message || "Unable to load profile"); })
       .finally(() => { if (active) setLoading(false); });
@@ -36,7 +36,7 @@ export default function StudentProfile() {
   if (loading) return <div className="state-card">Loading profile…</div>;
   return <div className="dashboard-page">
     <header className="page-header"><div><p className="eyebrow">Step 1</p><h1>Your profile</h1><p>{user.name} · {user.email}</p></div></header>
-    {locked && <p className="notice">Your profile is locked while your transfer is being reviewed.</p>}
+    {locked && <p className="notice">Your profile is locked during an active request or after admission cancellation.</p>}
     <section className="panel"><form className="record-form profile-form" onSubmit={save}>
       <fieldset disabled={locked || busy}><legend>Personal and previous academic details</legend>
         <button type="button" className="secondary-button" onClick={() => { setForm({ phone: "9000000001", dateOfBirth: "2005-04-12", previousStudentId: "A-101", previousInstitution: "Sample College A", previousProgram: "BCA", admissionYear: 2025 }); setSaved(false); }}>Use sample profile</button>

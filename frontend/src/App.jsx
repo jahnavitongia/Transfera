@@ -12,6 +12,9 @@ import StudentProfile from "./pages/StudentProfile";
 import NewTransfer from "./pages/NewTransfer";
 import Transfers from "./pages/Transfers";
 import TransferDetail from "./pages/TransferDetail";
+import Cancellations from "./pages/Cancellations";
+import NewCancellation from "./pages/NewCancellation";
+import CancellationDetail from "./pages/CancellationDetail";
 
 const ProtectedRoute = ({ roles, children }) => {
   const { user, loading, error } = useAuth();
@@ -34,6 +37,9 @@ const App = () => (
       <Route path="transfers" element={<Transfers />} />
       <Route path="transfers/new" element={<ProtectedRoute roles={["student"]}><NewTransfer /></ProtectedRoute>} />
       <Route path="transfers/:id" element={<TransferDetail />} />
+      <Route path="cancellations" element={<Cancellations />} />
+      <Route path="cancellations/new" element={<ProtectedRoute roles={["student"]}><NewCancellation /></ProtectedRoute>} />
+      <Route path="cancellations/:id" element={<CancellationDetail />} />
       <Route path="subjects" element={<StaffOnly><WorkspacePage /></StaffOnly>} />
       <Route path="evaluations" element={<Navigate to="/dashboard/transfers" replace />} />
       <Route path="staff" element={<ProtectedRoute roles={["admin"]}><StaffAccounts /></ProtectedRoute>} />

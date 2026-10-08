@@ -1,5 +1,6 @@
 const Student = require("../models/student");
 const Transfer = require("../models/Transfer");
+const Cancellation = require("../models/Cancellation");
 const policy = require("../config/demoPolicy");
 const withStudentStatus = require("../services/studentStatus");
 const getProfile = async (req, res, next) => {
@@ -18,13 +19,15 @@ const saveProfile = async (req, res, next) => {
       return res.status(400).json({ message: "Enter a 10-digit phone, valid birth date, previous ID/institution/program, and admission year" });
     }
     const existing = await Student.findOne({ user: req.user.id });
-    if (existing && await Transfer.exists({ student: existing._id, status: { $in: ["pending", "under_review"] } })) {
-      return res.status(409).json({ message: "Your profile is locked while a transfer is being reviewed" });
+    if (existing && (existing.activeRequest || existing.admissionStatus === "cancelled" ||
+        await Transfer.exists({ student: existing._id, status: { $in: ["pending", "under_review"] } }) ||
+        await Cancellation.exists({ student: existing._id, status: { $in: ["pending", "under_review", "approved"] } }))) {
+      return res.status(409).json({ message: "Your profile is locked during an active request or after admission cancellation" });
     }
     const student = await Student.findOneAndUpdate({ user: req.user.id }, {
       $set: { name: req.user.name, email: req.user.email, phone, dateOfBirth: birth,
-        previousStudentId: previousStudentId.trim(), previousInstitution: previousInstitution.trim(), previousProgram, admissionYear: Number(admissionYear) },
-      $setOnInsert: { user: req.user.id, studentId: `STU-${req.user.id}`, currentProgram: previousProgram },
+        previousStudentId: previousStudentId.trim(), previousInstitution: previousInstitution.trim(), previousProgram, currentProgram: previousProgram, admissionYear: Number(admissionYear) },
+      $setOnInsert: { user: req.user.id, studentId: `STU-${req.user.id}` },
     }, { returnDocument: "after", upsert: true, runValidators: true });
     res.json({ student: (await withStudentStatus([student]))[0] });
   } catch (error) { next(error); }

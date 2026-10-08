@@ -1,15 +1,26 @@
 const Transfer = require("../models/Transfer");
-// Transfer documents are the authoritative decision; avoid two independently updated status fields.
-const withStudentStatus = async (students) => {
-  const records = await Transfer.find({ student: { $in: students.map(student => student._id) } }).select("student status currentProgram").sort({ createdAt: -1 }).lean();
-  const latest = new Map();
-  for (const record of records) if (!latest.has(String(record.student))) latest.set(String(record.student), record);
+const Cancellation = require("../models/Cancellation");
+// Request decisions are authoritative; status is derived rather than separately updated.
+const withStudentStatus = async students => {
+  const filter = { student: { $in: students.map(student => student._id) } };
+  const [transfers, cancellations] = await Promise.all([
+    Transfer.find(filter).select("student status currentProgram destinationInstitution").sort({ createdAt: -1 }).lean(),
+    Cancellation.find(filter).select("student status").sort({ createdAt: -1 }).lean(),
+  ]);
+  const latest = records => { const map = new Map(); for (const record of records) if (!map.has(String(record.student))) map.set(String(record.student), record); return map; };
+  const transferMap = latest(transfers), cancellationMap = latest(cancellations);
   return students.map(student => {
-    const record = latest.get(String(student._id));
-    return { ...(student.toObject ? student.toObject() : student),
-      ...(record ? { transferStatus: ["pending", "under_review"].includes(record.status) ? "pending" : record.status === "approved" ? "completed" : "not_applicable",
-        admissionStatus: student.admissionStatus === "cancelled" ? "cancelled" : record.status === "approved" ? "transferred" : "active",
-        ...(record.status === "approved" ? { currentProgram: record.currentProgram } : {}) } : {}) };
+    const value = student.toObject ? student.toObject() : { ...student };
+    delete value.activeRequest;
+    const transfer = transferMap.get(String(student._id)), cancellation = cancellationMap.get(String(student._id));
+    const cancelled = value.admissionStatus === "cancelled" || cancellation?.status === "approved";
+    return { ...value,
+      admissionStatus: cancelled ? "cancelled" : transfer?.status === "approved" ? "transferred" : value.admissionStatus,
+      currentInstitution: transfer?.status === "approved" ? transfer.destinationInstitution : value.previousInstitution,
+      currentProgram: transfer?.status === "approved" ? transfer.currentProgram : value.currentProgram,
+      transferStatus: transfer ? ["pending", "under_review"].includes(transfer.status) ? "pending" : transfer.status === "approved" ? "completed" : "not_applicable" : value.transferStatus,
+      cancellationStatus: cancellation?.status || "not_applicable",
+    };
   });
 };
 module.exports = withStudentStatus;

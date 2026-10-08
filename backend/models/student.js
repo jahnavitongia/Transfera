@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const studentSchema = new mongoose.Schema(
     {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User", unique: true, sparse: true },
+        activeRequest: { type: new mongoose.Schema({ kind: { type: String, enum: ["transfer", "cancellation"] }, id: mongoose.Schema.Types.ObjectId }, { _id: false }), default: undefined },
         dateOfBirth: { type: Date },
         previousStudentId: { type: String, trim: true },
         studentId: {

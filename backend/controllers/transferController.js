@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Transfer = require("../models/Transfer");
 const Student = require("../models/student");
 const Subject = require("../models/Subject");
+const { reserveRequest, releaseRequest } = require("../services/admissionWorkflow");
 const policy = require("../config/demoPolicy");
 const { buildEvaluation, summarize, findDuplicateFlags } = require("../services/transferMapping");
 
@@ -46,7 +47,9 @@ const createTransfer = async (req, res, next) => {
     const bytes = Buffer.from(transcript.content, "base64");
     if (!bytes.length || bytes.length > 2 * 1024 * 1024 || (transcript.mimeType === "application/pdf" && bytes.subarray(0, 5).toString() !== "%PDF-")) return res.status(400).json({ message: "Transcript is empty, too large, or not a valid PDF" });
     const others = await Student.find({ _id: { $ne: student._id } }).select("name phone dateOfBirth previousStudentId previousInstitution");
-    const transfer = await Transfer.create({ student: student._id,
+    const requestId = await reserveRequest(student._id, "transfer");
+    let transfer;
+    try { transfer = await Transfer.create({ _id: requestId, student: student._id,
       previousInstitution: student.previousInstitution, previousProgram: student.previousProgram,
       currentProgram, destinationSemester: Number(destinationSemester), destinationInstitution: policy.institution,
       curriculumVersion: policy.curriculumVersion, transferReason: transferReason.trim(),
@@ -54,6 +57,7 @@ const createTransfer = async (req, res, next) => {
         credits: Number(subject.credits), gradePoint: Number(subject.gradePoint), topics: subject.topics || "" })),
       transcript: { fileName: transcript.fileName.replace(/[^a-zA-Z0-9._ -]/g, "_").slice(0, 100), mimeType: transcript.mimeType, content: transcript.content },
       duplicateFlags: findDuplicateFlags(student, others) });
+    } catch (error) { await releaseRequest(student._id, "transfer", requestId); throw error; }
     res.status(201).json({ transfer: serialize(transfer, req.user) });
   } catch (error) { next(error); }
 };
@@ -124,6 +128,7 @@ const updateTransferStatus = async (req, res, next) => {
     const updated = await Transfer.findOneAndUpdate({ _id: transfer._id, updatedAt: transfer.updatedAt, status: { $in: ["pending", "under_review"] } },
       { $set: { status, remarks: remarks.trim(), processedBy: req.user.id, decidedAt: new Date() } }, { returnDocument: "after", runValidators: true });
     if (!updated) return res.status(409).json({ message: "Request changed. Refresh before deciding" });
+    await releaseRequest(transfer.student._id, "transfer", transfer._id);
     await updated.populate("student", "studentId name email phone dateOfBirth previousStudentId");
     await updated.populate("reviewedBy processedBy", "name role");
     res.json({ transfer: serialize(updated, req.user) });

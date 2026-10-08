@@ -17,9 +17,10 @@ $env:PATH = $nodeDir.FullName + ';' + $env:PATH
 $env:npm_config_cache = Join-Path $projectDir '.npm-cache'
 $pidFile = Join-Path $stateDir 'processes.json'
 if (Test-Path -LiteralPath $pidFile) {
-  $running = @(Get-Content -LiteralPath $pidFile -Raw | ConvertFrom-Json | Where-Object {
+  $entries = Get-Content -LiteralPath $pidFile -Raw | ConvertFrom-Json
+  $running = @($entries | Where-Object {
     $process = Get-Process -Id $_.id -ErrorAction SilentlyContinue
-    $process -and $process.Path -eq $_.path -and $process.StartTime.ToUniversalTime().ToString('o') -eq $_.started
+    $process -and $process.Path -eq $_.path -and $process.StartTime.ToUniversalTime() -eq ([datetime]$_.started).ToUniversalTime()
   })
   if ($running.Count) { throw 'Demo processes are already running. Use scripts/Stop-Demo.ps1 before restarting.' }
 }

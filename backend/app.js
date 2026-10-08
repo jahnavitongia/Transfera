@@ -34,6 +34,7 @@ app.use("/api/test", testRoutes);
 app.use("/api/profile", require("./routes/profileRoutes"));
 app.use("/api/students", studentRoutes);
 app.use("/api/transfers", transferRoutes);
+app.use("/api/cancellations", require("./routes/cancellationRoutes"));
 app.use("/api/mappings", mappingRoutes);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/previous-subjects", previousSubjectRoutes);
@@ -43,6 +44,7 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
+  if (error.code === "REQUEST_CONFLICT") return res.status(409).json({ message: error.message });
   if (error.code === 11000) return res.status(409).json({ message: "An active request or record already exists" });
   if (["ValidationError", "CastError"].includes(error.name)) return res.status(400).json({ message: error.message });
   if (error.type === "entity.too.large") return res.status(413).json({ message: "Uploaded request is too large" });
