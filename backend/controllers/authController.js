@@ -10,15 +10,20 @@ const registerUser = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
 
-        // Check required fields
-        if (!name || !email || !password) {
+        if (!name?.trim() || !email?.trim() || !password) {
             return res.status(400).json({
                 message: "Name, email and password are required"
             });
         }
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
+        if (password.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const existingUser = await User.findOne({ email: normalizedEmail });
 
         if (existingUser) {
             return res.status(400).json({
@@ -26,15 +31,12 @@ const registerUser = async (req, res) => {
             });
         }
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create user
+        const hashedPassword = await bcrypt.hash(password, 12);
         const user = await User.create({
-            name,
-            email,
+            name: name.trim(),
+            email: normalizedEmail,
             password: hashedPassword,
-            role: role || "staff"
+            role: role === "admin" ? "admin" : "staff"
         });
 
         res.status(201).json({
@@ -65,15 +67,14 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check fields
-        if (!email || !password) {
+        if (!email?.trim() || !password) {
             return res.status(400).json({
                 message: "Email and password are required"
             });
         }
 
-        // Find user
-        const user = await User.findOne({ email });
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
 
         if (!user) {
             return res.status(401).json({
@@ -81,7 +82,6 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // Compare password
         const isPasswordCorrect = await bcrypt.compare(
             password,
             user.password
@@ -93,7 +93,6 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // Create JWT
         const token = jwt.sign(
             {
                 id: user._id,
@@ -101,7 +100,7 @@ const loginUser = async (req, res) => {
             },
             process.env.JWT_SECRET,
             {
-                expiresIn: "1d"
+                expiresIn: process.env.JWT_EXPIRES_IN || "1d"
             }
         );
 

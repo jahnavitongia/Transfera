@@ -1,374 +1,90 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { Link } from "react-router-dom";
+import { get } from "../services/api";
+
+const StatCard = ({ label, value, tone, icon }) => (
+  <article className={`stat-card ${tone}`}>
+    <div className="stat-icon">{icon}</div>
+    <div><span>{label}</span><strong>{value}</strong></div>
+  </article>
+);
 
 const Dashboard = () => {
+  const [data, setData] = useState({ students: [], transfers: [], subjects: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    const [students, setStudents] = useState([]);
-    const [transfers, setTransfers] = useState([]);
-    const [subjects, setSubjects] = useState([]);
-
-    const [loading, setLoading] = useState(true);
-
-    const token =
-        localStorage.getItem("transferaToken");
-
-    const config = {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
+  useEffect(() => {
+    let active = true;
+    const loadData = async () => {
+      try {
+        const [students, transfers, subjects] = await Promise.all([
+          get("/students"), get("/transfers"), get("/subjects"),
+        ]);
+        if (active) setData({
+          students: students.data.students || [],
+          transfers: transfers.data.transfers || [],
+          subjects: subjects.data.subjects || [],
+        });
+      } catch (requestError) {
+        if (active) setError(requestError.response?.data?.message || "Unable to load dashboard data.");
+      } finally {
+        if (active) setLoading(false);
+      }
     };
+    loadData();
+    return () => { active = false; };
+  }, []);
 
-    useEffect(() => {
+  const pending = data.transfers.filter((item) => item.status === "pending").length;
+  const approved = data.transfers.filter((item) => item.status === "approved").length;
+  const recentTransfers = data.transfers.slice(0, 5);
 
-        const fetchDashboardData = async () => {
+  return (
+    <div className="dashboard-page">
+      <header className="page-header">
+        <div><p className="eyebrow">Overview</p><h1>Good morning, Admin</h1><p>Here is what is happening across student transfers today.</p></div>
+        <div className="live-pill"><span /> Live system</div>
+      </header>
 
-            try {
+      {loading ? <div className="state-card"><div className="spinner" />Loading dashboard…</div> : error ? (
+        <div className="state-card state-error"><span>!</span><h2>Dashboard unavailable</h2><p>{error}</p></div>
+      ) : (
+        <>
+          <section className="stats-grid">
+            <StatCard label="Total students" value={data.students.length} tone="blue" icon="◎" />
+            <StatCard label="Transfer requests" value={data.transfers.length} tone="violet" icon="↗" />
+            <StatCard label="Active subjects" value={data.subjects.length} tone="green" icon="▤" />
+            <StatCard label="Pending review" value={pending} tone="amber" icon="◷" />
+          </section>
 
-                const [
-                    studentsResponse,
-                    transfersResponse,
-                    subjectsResponse
-                ] = await Promise.all([
-
-                    axios.get(
-                        "http://localhost:5001/api/students",
-                        config
-                    ),
-
-                    axios.get(
-                        "http://localhost:5001/api/transfers",
-                        config
-                    ),
-
-                    axios.get(
-                        "http://localhost:5001/api/subjects",
-                        config
-                    )
-
-                ]);
-
-                setStudents(
-                    studentsResponse.data.students || []
-                );
-
-                setTransfers(
-                    transfersResponse.data.transfers || []
-                );
-
-                setSubjects(
-                    subjectsResponse.data.subjects || []
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Dashboard Error:",
-                    error
-                );
-
-            } finally {
-
-                setLoading(false);
-
-            }
-        };
-
-        fetchDashboardData();
-
-    }, []);
-
-    const pendingTransfers =
-        transfers.filter(
-            transfer =>
-                transfer.status === "pending"
-        ).length;
-
-    const approvedTransfers =
-        transfers.filter(
-            transfer =>
-                transfer.status === "approved"
-        ).length;
-
-    if (loading) {
-
-        return (
-            <div className="loading-screen">
-                Loading Transfera...
-            </div>
-        );
-
-    }
-
-    return (
-
-        <div className="dashboard">
-
-            {/* SIDEBAR */}
-
-            <aside className="sidebar">
-
-                <div className="brand">
-
-                    <div className="brand-logo">
-                        T
-                    </div>
-
-                    <span>
-                        Transfera
-                    </span>
-
+          <section className="dashboard-grid">
+            <article className="panel">
+              <div className="panel-heading"><div><h2>Recent transfers</h2><span>Latest activity</span></div><Link to="/dashboard/transfers">View all →</Link></div>
+              {recentTransfers.length ? <div className="transfer-list">{recentTransfers.map((transfer) => (
+                <div className="transfer-row" key={transfer._id}>
+                  <div className="student-avatar">{transfer.student?.studentId?.slice(0, 2).toUpperCase() || "ST"}</div>
+                  <div className="transfer-details"><strong>{transfer.student?.studentId || "Student"}</strong><span>{transfer.student?.name || transfer.previousInstitution || "Transfer request"}</span></div>
+                  <span className={`status ${transfer.status || "pending"}`}>{transfer.status || "pending"}</span>
                 </div>
-
-                <nav>
-
-                    <a className="nav-item active">
-                        Dashboard
-                    </a>
-
-                    <a className="nav-item">
-                        Students
-                    </a>
-
-                    <a className="nav-item">
-                        Transfers
-                    </a>
-
-                    <a className="nav-item">
-                        Subjects
-                    </a>
-
-                    <a className="nav-item">
-                        Evaluations
-                    </a>
-
-                </nav>
-
-                <div className="sidebar-bottom">
-
-                    <button
-                        onClick={() => {
-
-                            localStorage.removeItem(
-                                "transferaToken"
-                            );
-
-                            window.location.href =
-                                "/login";
-
-                        }}
-                    >
-                        Logout
-                    </button>
-
-                </div>
-
-            </aside>
-
-
-            {/* MAIN CONTENT */}
-
-            <main className="dashboard-main">
-
-                <header className="dashboard-header">
-
-                    <div>
-
-                        <h1>
-                            Dashboard
-                        </h1>
-
-                        <p>
-                            Overview of student
-                            transfers and evaluations
-                        </p>
-
-                    </div>
-
-                    <div className="admin-badge">
-
-                        Admin
-
-                    </div>
-
-                </header>
-
-
-                {/* STAT CARDS */}
-
-                <section className="stats-grid">
-
-                    <div className="stat-card">
-
-                        <div className="stat-title">
-                            Total Students
-                        </div>
-
-                        <div className="stat-value">
-                            {students.length}
-                        </div>
-
-                    </div>
-
-
-                    <div className="stat-card">
-
-                        <div className="stat-title">
-                            Total Transfers
-                        </div>
-
-                        <div className="stat-value">
-                            {transfers.length}
-                        </div>
-
-                    </div>
-
-
-                    <div className="stat-card">
-
-                        <div className="stat-title">
-                            Current Subjects
-                        </div>
-
-                        <div className="stat-value">
-                            {subjects.length}
-                        </div>
-
-                    </div>
-
-
-                    <div className="stat-card">
-
-                        <div className="stat-title">
-                            Pending Transfers
-                        </div>
-
-                        <div className="stat-value">
-                            {pendingTransfers}
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                {/* TRANSFER SUMMARY */}
-
-                <section className="content-grid">
-
-                    <div className="panel">
-
-                        <div className="panel-header">
-
-                            <h2>
-                                Recent Transfers
-                            </h2>
-
-                            <span>
-                                {transfers.length}
-                            </span>
-
-                        </div>
-
-
-                        {transfers.length === 0 ? (
-
-                            <div className="empty-state">
-
-                                No transfers found.
-
-                            </div>
-
-                        ) : (
-
-                            <div className="transfer-list">
-
-                                {transfers
-                                    .slice(0, 5)
-                                    .map(transfer => (
-
-                                        <div
-                                            className="transfer-row"
-                                            key={transfer._id}
-                                        >
-
-                                            <div>
-
-                                                <strong>
-                                                    {transfer.student?.studentId ||
-                                                        "Student"}
-                                                </strong>
-
-                                                <p>
-                                                    {transfer.previousInstitution ||
-                                                        "Previous Institution"}
-                                                </p>
-
-                                            </div>
-
-                                            <span
-                                                className={`status ${transfer.status}`}
-                                            >
-                                                {transfer.status ||
-                                                    "pending"}
-                                            </span>
-
-                                        </div>
-
-                                    ))}
-
-                            </div>
-
-                        )}
-
-                    </div>
-
-
-                    <div className="panel">
-
-                        <div className="panel-header">
-
-                            <h2>
-                                Transfer Status
-                            </h2>
-
-                        </div>
-
-                        <div className="status-summary">
-
-                            <div>
-
-                                <strong>
-                                    {approvedTransfers}
-                                </strong>
-
-                                <span>
-                                    Approved
-                                </span>
-
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    {pendingTransfers}
-                                </strong>
-
-                                <span>
-                                    Pending
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-            </main>
-
-        </div>
-    );
+              ))}</div> : <div className="empty-state"><span>⌁</span><h3>No transfers yet</h3><p>Transfer requests will appear here.</p></div>}
+            </article>
+
+            <article className="panel status-panel">
+              <div className="panel-heading"><div><h2>Transfer status</h2><span>Current queue</span></div></div>
+              <div className="status-donut" style={{ "--approved": `${approved / Math.max(data.transfers.length, 1) * 360}deg` }}>
+                <div><strong>{data.transfers.length}</strong><span>Total</span></div>
+              </div>
+              <div className="status-legend">
+                <div><span className="legend-dot approved" /><p><strong>{approved}</strong>Approved</p></div>
+                <div><span className="legend-dot pending" /><p><strong>{pending}</strong>Pending</p></div>
+              </div>
+            </article>
+          </section>
+        </>
+      )}
+    </div>
+  );
 };
 
 export default Dashboard;

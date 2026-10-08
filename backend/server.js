@@ -1,48 +1,53 @@
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 
+const app = require("./app");
 const connectDB = require("./config/db");
 
-const authRoutes = require("./routes/authRoutes");
-const testRoutes = require("./routes/testRoutes");
-const studentRoutes = require("./routes/studentRoutes");
-const transferRoutes = require("./routes/transferRoutes");
-const mappingRoutes = require("./routes/mappingRoutes");
-const subjectRoutes = require("./routes/subjectRoutes");
-const previousSubjectRoutes =
-    require("./routes/previousSubjectRoutes");
-
-const app = express();
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Connect MongoDB
-connectDB();
-
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/test", testRoutes);
-app.use("/api/students", studentRoutes);
-app.use("/api/transfers", transferRoutes);
-app.use("/api/mappings", mappingRoutes);
-app.use("/api/subjects", subjectRoutes);
-app.use(
-    "/api/previous-subjects",
-    previousSubjectRoutes
+const requiredEnvironmentVariables = ["MONGO_URI", "JWT_SECRET"];
+const missingVariables = requiredEnvironmentVariables.filter(
+  (variable) => !process.env[variable]
 );
 
-// Test route
-app.get("/", (req, res) => {
-    res.json({
-        message: "Transfera API is running"
-    });
-});
+if (missingVariables.length > 0) {
+  throw new Error(
+    `Missing required environment variables: ${missingVariables.join(", ")}. ` +
+    "Copy backend/.env.example to backend/.env and update the values."
+  );
+}
 
-const PORT = process.env.PORT || 5001;
+const PORT = Number(process.env.PORT) || 5001;
 
-app.listen(PORT, () => {
-    console.log(`Transfera server running on port ${PORT}`);
+const startServer = async () => {
+  let databaseConnected = false;
+
+  try {
+    await connectDB();
+    databaseConnected = true;
+  } catch (error) {
+    console.warn(
+      "MongoDB is unavailable. The API will start in degraded mode:",
+      error.message
+    );
+  }
+
+  app.set("databaseConnected", databaseConnected);
+
+  const server = app.listen(PORT, () => {
+    const databaseState = databaseConnected ? "connected" : "degraded";
+    console.log(`Transfera API running on http://localhost:${PORT} (${databaseState})`);
+  });
+
+  const shutdown = async (signal) => {
+    console.log(`${signal} received. Closing server...`);
+    server.close(() => process.exit(0));
+  };
+
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+};
+
+startServer().catch((error) => {
+  console.error("Unable to start Transfera API:", error.message);
+  process.exit(1);
 });

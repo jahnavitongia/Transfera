@@ -1,12 +1,19 @@
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
+    const mongoUri = process.env.MONGO_URI;
+
+    if (!mongoUri) {
+        throw new Error("MONGO_URI is required to connect to MongoDB.");
+    }
+
     try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log("MongoDB Connected");
+        await mongoose.connect(mongoUri, {
+            serverSelectionTimeoutMS: 10000,
+        });
+        console.log("MongoDB connected successfully.");
     } catch (error) {
-        console.error("MongoDB Connection Error:", error.message);
-        process.exit(1);
+        throw new Error(`MongoDB connection failed: ${error.message}`);
     }
 };
 
