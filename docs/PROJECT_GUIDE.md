@@ -122,11 +122,11 @@ The backend checks ownership and roles, filters public registration to student a
 
 ## 6 Team setup and presentation plan
 
-Use main from the GitHub repository. The short TEAMMATE_SETUP guide is designed for 64-bit Windows laptops with a D: drive, including machines without Node or MongoDB installed.
+Use main from the GitHub repository. The short TEAMMATE_SETUP guide is designed for 64-bit Windows laptops using any chosen project folder, including machines without Node or MongoDB installed.
 
 ### What setup does
 
-Setup downloads the pinned portable runtimes from official sources when missing and verifies their SHA-256 hashes. It installs locked dependencies, creates a random local secret and prepares local data folders. Downloads, caches and application logs stay within the project on D:. Initial internet and disk space are required; the MongoDB archive is about 800 MB. Subsequent demonstrations can run locally without an internet connection.
+Setup downloads the pinned portable runtimes from official sources when missing and verifies their SHA-256 hashes. It installs locked dependencies, creates a random local secret and prepares local data folders. Downloads, caches and application logs stay within the chosen project folder. Initial internet and disk space are required; the MongoDB archive is about 800 MB. Subsequent demonstrations can run locally without an internet connection.
 
 ### Four accounts for a clear demonstration
 

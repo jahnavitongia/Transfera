@@ -1,7 +1,5 @@
 $ErrorActionPreference = 'Stop'
 $repoDir = [IO.Path]::GetFullPath((Split-Path $PSScriptRoot -Parent))
-$allowedRoot = 'D:\Chatgpt_env\Transfera'
-if (!$repoDir.StartsWith($allowedRoot + '\', [StringComparison]::OrdinalIgnoreCase) -and $repoDir -ne $allowedRoot) { throw 'Extract the project inside D:\Chatgpt_env\Transfera first.' }
 if (![Environment]::Is64BitOperatingSystem) { throw 'This setup needs 64-bit Windows.' }
 $stateDir = Join-Path $repoDir '.demo'
 $runtimeDir = Join-Path $stateDir 'tools'

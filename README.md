@@ -6,14 +6,14 @@ A working local demo for student transfers and admission cancellation. Students 
 
 ## Windows setup
 
-Download `main` and extract it inside `D:\Chatgpt_env\Transfera`. Open PowerShell in the folder containing this README, then run:
+Download `main` and extract it in any folder you choose. Open PowerShell in the folder containing this README, then run:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Setup-Windows.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Start-Demo.ps1
 ```
 
-Setup downloads verified portable Node 22.23.3 and MongoDB 8.0.20 with app-local Microsoft runtime libraries when missing, installs dependencies and creates local configuration. Internet is needed initially; the MongoDB archive is about 800 MB. Project downloads, caches, data and logs stay on D:. Existing configuration and request history are preserved.
+Setup downloads verified portable Node 22.23.3 and MongoDB 8.0.20 with app-local Microsoft runtime libraries when missing, installs dependencies and creates local configuration. Internet is needed initially; the MongoDB archive is about 800 MB. Project downloads, caches, data and logs stay inside your chosen project folder. Existing configuration and request history are preserved.
 
 Open http://localhost:5173. To check setup:
 
