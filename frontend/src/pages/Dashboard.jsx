@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { get } from "../services/api";
+import { useAuth } from "../auth/useAuth";
 
 const StatCard = ({ label, value, tone, icon }) => (
   <article className={`stat-card ${tone}`}>
@@ -10,6 +11,7 @@ const StatCard = ({ label, value, tone, icon }) => (
 );
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [data, setData] = useState({ students: [], transfers: [], subjects: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,8 +45,8 @@ const Dashboard = () => {
   return (
     <div className="dashboard-page">
       <header className="page-header">
-        <div><p className="eyebrow">Overview</p><h1>Good morning, Admin</h1><p>Here is what is happening across student transfers today.</p></div>
-        <div className="live-pill"><span /> Live system</div>
+        <div><p className="eyebrow">Overview</p><h1>Welcome, {user.name}</h1><p>Here is what is happening across student transfers today.</p></div>
+        <div className="live-pill"><span /> Demo workspace</div>
       </header>
 
       {loading ? <div className="state-card"><div className="spinner" />Loading dashboard…</div> : error ? (

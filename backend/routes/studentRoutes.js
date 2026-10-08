@@ -10,14 +10,15 @@ const {
 const protect = require("../middleware/authMiddleware");
 
 const router = express.Router();
+router.use(protect, protect.allowRoles("staff", "admin"));
 
 // All student routes are protected
-router.post("/", protect, addStudent);
+router.post("/", addStudent);
 
-router.get("/", protect, getStudents);
+router.get("/", getStudents);
 
-router.get("/:id", protect, getStudentById);
+router.get("/:id", getStudentById);
 
-router.put("/:id", protect, updateStudent);
+router.put("/:id", updateStudent);
 
 module.exports = router;

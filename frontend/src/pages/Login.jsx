@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { post } from "../services/api";
+import { useAuth } from "../auth/useAuth";
 
 const Login = () => {
     const navigate = useNavigate();
+    const { signIn } = useAuth();
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -23,7 +25,7 @@ const Login = () => {
             const response = await post(endpoint, payload);
 
             if (response.data.token) {
-                localStorage.setItem("transferaToken", response.data.token);
+                signIn(response.data);
                 navigate("/dashboard");
             } else {
                 setError("Account created successfully. Please sign in.");
@@ -70,7 +72,7 @@ const Login = () => {
                     <input id="email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
 
                     <label htmlFor="password">Password</label>
-                    <input id="password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} minLength="6" required />
+                    <input id="password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} minLength="8" required />
 
                     {error && <div className="error-message">{error}</div>}
 
@@ -80,10 +82,10 @@ const Login = () => {
                 </form>
 
                 <p className="login-switch">
-                    {isRegistering ? "Already have an account?" : "New to Transfera?"}{" "}
+                    {isRegistering ? "Already have an account?" : "New student?"}{" "}
                     <button type="button" onClick={switchMode}>{isRegistering ? "Sign in" : "Create account"}</button>
                 </p>
-                <p className="login-footer">Secure Student Transfer & Evaluation</p>
+                <p className="login-footer">Students can register. Staff accounts are provided by an administrator.</p>
             </div>
         </div>
     );

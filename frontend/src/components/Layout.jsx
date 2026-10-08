@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/useAuth";
 
 const navigation = [
   { label: "Dashboard", to: "/dashboard", icon: "grid" },
@@ -20,9 +21,11 @@ const icons = {
 const Layout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const items = user.role === "student" ? navigation.slice(0, 1) : [...navigation, ...(user.role === "admin" ? [{ label: "Staff accounts", to: "/dashboard/staff", icon: "users" }] : [])];
 
   const logout = () => {
-    localStorage.removeItem("transferaToken");
+    signOut();
     navigate("/login", { replace: true });
   };
 
@@ -39,10 +42,11 @@ const Layout = () => {
 
         <nav className="sidebar-nav" aria-label="Main navigation">
           <span className="nav-label">Workspace</span>
-          {navigation.map((item) => (
+          {items.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.to === "/dashboard"}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
               onClick={() => setMobileOpen(false)}
             >
@@ -54,8 +58,8 @@ const Layout = () => {
 
         <div className="sidebar-footer">
           <div className="user-card">
-            <div className="avatar">AD</div>
-            <div><strong>Admin Desk</strong><span>Administrator</span></div>
+            <div className="avatar">{user.name.slice(0, 2).toUpperCase()}</div>
+            <div><strong>{user.name}</strong><span>{user.role}</span></div>
           </div>
           <button className="logout-button" onClick={logout}>Sign out</button>
         </div>

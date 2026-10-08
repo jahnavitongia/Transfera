@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
 const authRoutes = require("./routes/authRoutes");
 const testRoutes = require("./routes/testRoutes");
@@ -18,9 +19,9 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 app.get("/api/health", (req, res) => {
-  const databaseConnected = req.app.get("databaseConnected") === true;
+  const databaseConnected = mongoose.connection.readyState === 1;
 
-  res.status(200).json({
+  res.status(databaseConnected ? 200 : 503).json({
     status: databaseConnected ? "ok" : "degraded",
     service: "transfera-api",
     database: databaseConnected ? "connected" : "unavailable",

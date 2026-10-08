@@ -8,16 +8,15 @@ const {
 const protect = require("../middleware/authMiddleware");
 
 const router = express.Router();
+router.use(protect, protect.allowRoles("staff", "admin"));
 
 router.post(
     "/",
-    protect,
     addPreviousSubject
 );
 
 router.get(
     "/transfer/:transferId",
-    protect,
     getPreviousSubjects
 );
 

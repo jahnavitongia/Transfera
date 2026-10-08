@@ -1,5 +1,5 @@
 const Transfer = require("../models/Transfer");
-const Student = require("../models/Student");
+const Student = require("../models/student");
 
 // ==========================================
 // CREATE TRANSFER REQUEST

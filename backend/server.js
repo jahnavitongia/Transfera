@@ -1,53 +1,17 @@
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, ".env") });
-
+const mongoose = require("mongoose");
 const app = require("./app");
 const connectDB = require("./config/db");
-
-const requiredEnvironmentVariables = ["MONGO_URI", "JWT_SECRET"];
-const missingVariables = requiredEnvironmentVariables.filter(
-  (variable) => !process.env[variable]
-);
-
-if (missingVariables.length > 0) {
-  throw new Error(
-    `Missing required environment variables: ${missingVariables.join(", ")}. ` +
-    "Copy backend/.env.example to backend/.env and update the values."
-  );
+for (const variable of ["MONGO_URI", "JWT_SECRET"]) {
+  if (!process.env[variable]) throw new Error(`${variable} is required. Configure backend/.env first.`);
 }
-
-const PORT = Number(process.env.PORT) || 5001;
-
-const startServer = async () => {
-  let databaseConnected = false;
-
-  try {
-    await connectDB();
-    databaseConnected = true;
-  } catch (error) {
-    console.warn(
-      "MongoDB is unavailable. The API will start in degraded mode:",
-      error.message
-    );
-  }
-
-  app.set("databaseConnected", databaseConnected);
-
-  const server = app.listen(PORT, () => {
-    const databaseState = databaseConnected ? "connected" : "degraded";
-    console.log(`Transfera API running on http://localhost:${PORT} (${databaseState})`);
-  });
-
-  const shutdown = async (signal) => {
-    console.log(`${signal} received. Closing server...`);
-    server.close(() => process.exit(0));
-  };
-
-  process.on("SIGINT", () => shutdown("SIGINT"));
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
+const start = async () => {
+  await connectDB();
+  const port = Number(process.env.PORT) || 5001;
+  const server = app.listen(port, "127.0.0.1", () => console.log(`Transfera API: http://127.0.0.1:${port}`));
+  const shutdown = () => server.close(async () => { await mongoose.disconnect(); process.exit(0); });
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 };
-
-startServer().catch((error) => {
-  console.error("Unable to start Transfera API:", error.message);
-  process.exit(1);
-});
+start().catch(error => { console.error(error.message); process.exit(1); });

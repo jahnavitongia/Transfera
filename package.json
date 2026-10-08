@@ -1,0 +1,13 @@
+{
+  "name": "transfera-demo",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix backend ci && npm --prefix frontend ci",
+    "seed": "npm --prefix backend run seed",
+    "backend": "npm --prefix backend start",
+    "frontend": "npm --prefix frontend run dev -- --host 127.0.0.1",
+    "test": "npm --prefix backend test",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint"
+  }
+}

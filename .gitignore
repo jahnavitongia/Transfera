@@ -27,3 +27,5 @@ build/
 # Temporary files
 *.tmp
 *.temps
+# Local demo processes, database and logs
+.demo/

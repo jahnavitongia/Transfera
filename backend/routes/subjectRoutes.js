@@ -11,15 +11,16 @@ const {
 const protect = require("../middleware/authMiddleware");
 
 const router = express.Router();
+router.use(protect, protect.allowRoles("staff", "admin"));
 
-router.post("/", protect, addSubject);
+router.post("/", addSubject);
 
-router.get("/", protect, getSubjects);
+router.get("/", getSubjects);
 
-router.get("/:id", protect, getSubjectById);
+router.get("/:id", getSubjectById);
 
-router.put("/:id", protect, updateSubject);
+router.put("/:id", updateSubject);
 
-router.delete("/:id", protect, deleteSubject);
+router.delete("/:id", deleteSubject);
 
 module.exports = router;

@@ -8,12 +8,12 @@ const {
 const protect = require("../middleware/authMiddleware");
 
 const router = express.Router();
+router.use(protect, protect.allowRoles("staff", "admin"));
 
-router.post("/", protect, createMapping);
+router.post("/", createMapping);
 
 router.get(
     "/transfer/:transferId",
-    protect,
     getMappingsByTransfer
 );
 
