@@ -1,0 +1,50 @@
+# Run Transfera on Windows
+
+Use Windows 10/11 x64, a D: drive with about 3 GB free, and internet for the first setup. No Git, Node, MongoDB, IDE or cloud account needs to be installed beforehand.
+
+1. Open https://github.com/jahnavitongia/Transfera. Select **main → Code → Download ZIP**. Create `Chatgpt_env` on D:, then create `Transfera` inside it. Save the ZIP in `D:\Chatgpt_env\Transfera` and extract it there.
+2. Open the extracted **Transfera-main** folder. You must see `README.md`, `backend`, `frontend` and `scripts`.
+3. Click File Explorer's address bar, type `powershell`, and press Enter. Paste this command:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Setup-Windows.ps1
+```
+
+Wait for **SETUP COMPLETE**. First setup downloads portable tools, including about 800 MB for MongoDB. Everything stays in the project on D:.
+
+4. In the same PowerShell window, paste:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Start-Demo.ps1
+```
+
+Wait for **Demo started**. Open http://localhost:5173 in your browser.
+
+5. Check that everything works:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Check-Demo.ps1
+```
+
+Expect **SETUP CHECK PASSED**. This checks MongoDB, the API, the frontend and four logins.
+
+## Sign in
+
+Password for all: **TransferaDemo123!**
+
+- Transfer: `transfer@transfera.demo`
+- Cancellation: `cancellation@transfera.demo`
+- Review: `staff@transfera.demo`
+- Final decisions: `admin@transfera.demo`
+
+Each teammate has their own local database. Your actions do not appear on another laptop.
+
+## Next time
+
+Run only the Start command. To stop, paste:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Stop-Demo.ps1
+```
+
+If setup/start/check fails, copy the error text to the team. Never send `.env` or tokens. For “Unable to connect”, run Check-Demo and open http://localhost:5001/api/health. An existing service on ports 27018, 5001 or 5173 must be stopped before starting this demo. If there is no D: drive, ask the team before changing paths.

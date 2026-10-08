@@ -13,6 +13,8 @@ const seed = async () => {
     ["Demo Admin", "admin@transfera.demo", "admin"],
     ["Demo Staff", "staff@transfera.demo", "staff"],
     ["Aarav Sharma", "student@transfera.demo", "student"],
+    ["Aarav Sharma", "transfer@transfera.demo", "student"],
+    ["Riya Patel", "cancellation@transfera.demo", "student"],
   ]) {
     await User.updateOne({ email }, { $setOnInsert: { name, email, role, password } }, { upsert: true });
   }
@@ -24,6 +26,15 @@ const seed = async () => {
   const demoUser = await User.findOne({ email: "student@transfera.demo" });
   await Student.updateOne({ studentId: "DEMO001" }, { $set: { user: demoUser._id, dateOfBirth: new Date("2005-04-12"), previousStudentId: "A-101" } });
   await Student.updateOne({ studentId: "DEMO002" }, { $setOnInsert: { studentId: "DEMO002", name: "Aarav Sharm", email: "possible-duplicate@example.test", phone: "9000000002", dateOfBirth: new Date("2005-04-12"), previousStudentId: "A-102", previousInstitution: "Sample College A", previousProgram: "BCA", currentProgram: "BCA", admissionYear: 2025 } }, { upsert: true });
+  for (const [studentId, email, name, phone, birth, previousStudentId] of [
+    ["DEMO-TRANSFER", "transfer@transfera.demo", "Aarav Sharma", "9000000011", "2005-04-12", "A-103"],
+    ["DEMO-CANCEL", "cancellation@transfera.demo", "Riya Patel", "9000000012", "2005-09-14", "A-104"],
+  ]) {
+    const user = await User.findOne({ email });
+    await Student.updateOne({ studentId }, { $setOnInsert: { studentId, user: user._id, email, name, phone,
+      dateOfBirth: new Date(birth), previousStudentId, previousInstitution: "Sample College A",
+      previousProgram: "BCA", currentProgram: "BCA", admissionYear: 2025 } }, { upsert: true });
+  }
   for (const [code, name, credits, program, semester, topics] of [
     ["BCA101", "Programming Fundamentals", 4, "BCA", 1, "Variables, control flow, functions, arrays"],
     ["BCA102", "Mathematics", 4, "BCA", 1, "Algebra, matrices, calculus"],

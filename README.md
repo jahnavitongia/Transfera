@@ -1,45 +1,46 @@
 # Transfera
 
-Student transfer and admission cancellation demo. React/Vite + Express + MongoDB.
-AI is future scope; ABC IDs are excluded. All seeded records are fictional.
+A working local demo for student transfers and admission cancellation. Students submit requests, staff reviews academic evidence, and an admin records the final decision.
 
-## Run
+**Stack:** React/Vite, Express/Node, MongoDB/Mongoose, JWT and bcrypt. All demo records are fictional. AI is future scope; ABC ID is excluded.
 
-Requires Node 22.12+ and MongoDB Community running locally.
+## Windows setup
 
-1. `npm run setup`
-2. Copy `backend/.env.example` to `backend/.env`; set a random JWT_SECRET.
-3. Start MongoDB on port 27018 with an explicit local data/log folder.
-4. `npm run seed` (adds missing sample records; does not clear existing data).
-5. In two terminals: `npm run backend` and `npm run frontend`.
-6. Open http://localhost:5173.
+Download `main` and extract it inside `D:\Chatgpt_env\Transfera`. Open PowerShell in the folder containing this README, then run:
 
-On Swaraj's prepared D: workspace, run `powershell -ExecutionPolicy Bypass -File scripts/Start-Demo.ps1`.
-That launcher starts only the local database/API/frontend, with data/logs under Transfera.
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Setup-Windows.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Start-Demo.ps1
+```
 
-## Demo accounts
+Setup downloads verified portable Node 22.23.3 and MongoDB 8.0.20 with app-local Microsoft runtime libraries when missing, installs dependencies and creates local configuration. Internet is needed initially; the MongoDB archive is about 800 MB. Project downloads, caches, data and logs stay on D:. Existing configuration and request history are preserved.
 
-Password for all seeded accounts: `TransferaDemo123!` (fictional local demo only).
+Open http://localhost:5173. To check setup:
 
-| Account | Email |
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Check-Demo.ps1
+```
+
+## Presentation accounts
+
+All use password `TransferaDemo123!` for this local fictional demo.
+
+| Purpose | Email |
 | --- | --- |
-| Admin | admin@transfera.demo |
-| Staff | staff@transfera.demo |
-| Student | student@transfera.demo |
+| Transfer student | transfer@transfera.demo |
+| Cancellation student | cancellation@transfera.demo |
+| Staff review | staff@transfera.demo |
+| Admin decisions | admin@transfera.demo |
 
-Students register publicly. Only admins create staff. The API enforces permissions.
-No password or JWT secret is included in API account responses or committed environment files.
+Sample transfer: BCA → BCA or BSc Computer Science, semester 3. Staff can accept 8 credits from the sample subjects; two requirements in the compared semesters remain. Academic rules are editable samples, and duplicate flags require manual checks.
 
-## Check and continue
+## Guides
 
-`npm run test` requires local MongoDB. It uses separate test databases.
-`npm run lint` and `npm run build` check the frontend.
-Steps 1–3 are complete: accounts, student profile/transcript submission, BCA-to-BCA or BCA-to-BSc comparison, staff review and admin-only decisions. Admission cancellation includes student requests, staff recommendations, admin decisions and consistent admission status.
+- [Short teammate setup](TEAMMATE_SETUP.md)
+- [Project guide for team and jury](docs/PROJECT_GUIDE.md) · [Printable PDF](docs/Transfera_Project_Guide.pdf)
+- [Maintainer handoff](HANDOFF.md)
+- [Manual demo checks](DEMO_TESTING.md)
 
-For a short demo: student signs in → Profile → Use sample profile → Save → Continue → Use sample subjects and transcript → Submit. Staff opens Transfers → Compare subjects → checks course content and record flags → saves review. Admin records the final decision; student sees approved credits and remaining subjects.
+Stop the demo with `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Stop-Demo.ps1`.
 
-For cancellation: student opens Your cancellations → Request cancellation → enters a reason and acknowledges the effect. Staff saves a recommendation; admin approves or rejects with a reason. Approval cancels that admission; rejection keeps it unchanged. A student cannot run a transfer and cancellation together. Requests and decision dates remain as history. Fee refunds and institutional clearance are outside this demo.
-
-Rules live in `backend/config/demoPolicy.js`: semester 3 entry, 4/10 minimum grade, sufficient completed credits, 80% suggested / 50% review name similarity, and a 60-credit cap for the fictional 120-credit degree. Course aliases also suggest matches; staff verifies syllabus content. These are editable sample rules, not institution approval or proof of identity. The 50% cap and academic review approach were informed by the historical [MIT ADT 2016 academic ordinances](https://mituniversity.ac.in/assets_web/pdf/about/Academic_Ordinances_2016.pdf); other demo choices require faculty confirmation.
-
-See ROADMAP.md for the remaining steps.
+With Node on PATH: `npm run test`, `npm run lint`, `npm run build`. API tests use separate local MongoDB databases. Do not commit `.env`, runtime tools or database folders.
