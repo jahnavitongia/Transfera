@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 
 const subjectSchema = new mongoose.Schema(
     {
+        institution: { type: String, default: "Sample University B" },
+        curriculumVersion: { type: String, default: "2026-demo" },
+        topics: { type: String, default: "" },
         code: {
             type: String,
             required: true,
@@ -17,7 +20,8 @@ const subjectSchema = new mongoose.Schema(
 
         credits: {
             type: Number,
-            required: true
+            required: true,
+            min: 1
         },
 
         program: {
@@ -28,7 +32,8 @@ const subjectSchema = new mongoose.Schema(
 
         semester: {
             type: Number,
-            required: true
+            required: true,
+            min: 1
         }
     },
     {

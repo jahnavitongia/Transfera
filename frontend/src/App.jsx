@@ -8,6 +8,10 @@ import Students from "./pages/Students";
 import WorkspacePage from "./pages/WorkspacePage";
 import StudentHome from "./pages/StudentHome";
 import StaffAccounts from "./pages/StaffAccounts";
+import StudentProfile from "./pages/StudentProfile";
+import NewTransfer from "./pages/NewTransfer";
+import Transfers from "./pages/Transfers";
+import TransferDetail from "./pages/TransferDetail";
 
 const ProtectedRoute = ({ roles, children }) => {
   const { user, loading, error } = useAuth();
@@ -26,9 +30,12 @@ const App = () => (
     <Route path="/dashboard" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
       <Route index element={<Home />} />
       <Route path="students" element={<StaffOnly><Students /></StaffOnly>} />
-      <Route path="transfers" element={<StaffOnly><WorkspacePage /></StaffOnly>} />
+      <Route path="profile" element={<ProtectedRoute roles={["student"]}><StudentProfile /></ProtectedRoute>} />
+      <Route path="transfers" element={<Transfers />} />
+      <Route path="transfers/new" element={<ProtectedRoute roles={["student"]}><NewTransfer /></ProtectedRoute>} />
+      <Route path="transfers/:id" element={<TransferDetail />} />
       <Route path="subjects" element={<StaffOnly><WorkspacePage /></StaffOnly>} />
-      <Route path="evaluations" element={<StaffOnly><WorkspacePage /></StaffOnly>} />
+      <Route path="evaluations" element={<Navigate to="/dashboard/transfers" replace />} />
       <Route path="staff" element={<ProtectedRoute roles={["admin"]}><StaffAccounts /></ProtectedRoute>} />
     </Route>
     <Route path="*" element={<Navigate to="/dashboard" replace />} />

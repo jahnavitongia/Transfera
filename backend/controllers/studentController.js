@@ -1,4 +1,5 @@
 const Student = require("../models/student");
+const withStudentStatus = require("../services/studentStatus");
 
 // ==========================================
 // ADD STUDENT
@@ -57,7 +58,7 @@ const addStudent = async (req, res) => {
 
         res.status(201).json({
             message: "Student added successfully",
-            student
+            student: (await withStudentStatus([student]))[0]
         });
 
     } catch (error) {
@@ -81,7 +82,7 @@ const getStudents = async (req, res) => {
 
         res.status(200).json({
             count: students.length,
-            students
+            students: await withStudentStatus(students)
         });
 
     } catch (error) {
@@ -111,7 +112,7 @@ const getStudentById = async (req, res) => {
         }
 
         res.status(200).json({
-            student
+            student: (await withStudentStatus([student]))[0]
         });
 
     } catch (error) {
@@ -132,7 +133,7 @@ const updateStudent = async (req, res) => {
     try {
         const student = await Student.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            Object.fromEntries(Object.entries(req.body).filter(([key]) => ["name", "email", "phone", "previousInstitution", "previousProgram", "admissionYear"].includes(key))),
             {
                 new: true,
                 runValidators: true
@@ -147,7 +148,7 @@ const updateStudent = async (req, res) => {
 
         res.status(200).json({
             message: "Student updated successfully",
-            student
+            student: (await withStudentStatus([student]))[0]
         });
 
     } catch (error) {

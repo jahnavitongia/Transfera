@@ -2,6 +2,9 @@ const mongoose = require("mongoose");
 
 const studentSchema = new mongoose.Schema(
     {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User", unique: true, sparse: true },
+        dateOfBirth: { type: Date },
+        previousStudentId: { type: String, trim: true },
         studentId: {
             type: String,
             required: true,

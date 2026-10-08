@@ -42,7 +42,7 @@ const WorkspacePage = () => {
       </header>
       <section className="panel table-panel">
         <div className="panel-heading"><div><h2>All records</h2><span>{records.length} items</span></div></div>
-        {records.length ? <div className="table-wrap"><table><thead><tr><th>Record</th><th>Status</th><th>Updated</th></tr></thead><tbody>{records.map((record) => <tr key={record._id}><td><strong>{record.student?.studentId || record.code || record.name || "Record"}</strong><small>{record.student?.name || record.program || record.currentProgram || "—"}</small></td><td><span className={`status ${record.status || "pending"}`}>{record.status || "pending"}</span></td><td>{new Date(record.updatedAt || record.createdAt).toLocaleDateString()}</td></tr>)}</tbody></table></div> : <div className="empty-state"><span>⌁</span><h3>No records yet</h3><p>New records will appear here.</p></div>}
+        {records.length ? <div className="table-wrap"><table><thead><tr><th>Record</th><th>Status</th><th>Updated</th></tr></thead><tbody>{records.map((record) => <tr key={record._id}><td><strong>{record.student?.studentId || record.code || record.name || "Record"}</strong><small>{record.student?.name || record.program || record.currentProgram || "—"}</small></td><td><span className={`status ${record.status || "catalog"}`}>{record.status || "catalog"}</span></td><td>{new Date(record.updatedAt || record.createdAt).toLocaleDateString()}</td></tr>)}</tbody></table></div> : <div className="empty-state"><span>⌁</span><h3>No records yet</h3><p>New records will appear here.</p></div>}
       </section>
     </div>
   );

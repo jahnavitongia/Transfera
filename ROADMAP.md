@@ -3,8 +3,8 @@
 Fixed stack: React/Vite, Express/Node, MongoDB/Mongoose, JWT/bcrypt.
 Local demo; sample data only. AI is future scope. ABC IDs are excluded.
 
-1. Foundation: local setup, sample accounts/catalog, student registration, role permissions, admin staff creation.
-2. Transfers: student profile/request, same-program and program-switch examples, scoped course mapping, staff review, admin decision, student status.
+1. Complete — Foundation: local setup, sample accounts/catalog, student registration, role permissions, admin staff creation.
+2. Complete — Transfers: student profile/request, same-program and program-switch examples, scoped course mapping, staff review, admin decision, student status.
 3. Cancellations: student request, staff review/admin decision, recorded reason/date and status.
 4. Demo check: short walkthrough, print report, teammate handoff, build/tests.
 

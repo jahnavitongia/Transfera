@@ -1,34 +1,12 @@
-const {
-    evaluateTransfer
-} = require(
-    "../controllers/transferEvaluationController"
-);
-
-const express = require("express");
-
-const {
-    createTransfer,
-    getTransfers,
-    getTransferById,
-    updateTransferStatus
-} = require("../controllers/transferController");
-
+const router = require("express").Router();
 const protect = require("../middleware/authMiddleware");
-
-const router = express.Router();
-router.use(protect, protect.allowRoles("staff", "admin"));
-
-router.post("/", createTransfer);
-
-router.get("/", getTransfers);
-
-router.post(
-    "/:transferId/evaluate",
-    evaluateTransfer
-);
-
-router.get("/:id", getTransferById);
-
-router.put("/:id/status", updateTransferStatus);
-
+const controller = require("../controllers/transferController");
+router.use(protect);
+router.get("/", controller.getTransfers);
+router.post("/", protect.allowRoles("student"), controller.createTransfer);
+router.get("/:id/transcript", controller.downloadTranscript);
+router.get("/:id", controller.getTransferById);
+router.post("/:id/evaluate", protect.allowRoles("staff", "admin"), controller.evaluateTransfer);
+router.put("/:id/review", protect.allowRoles("staff", "admin"), controller.reviewTransfer);
+router.put("/:id/status", protect.allowRoles("admin"), controller.updateTransferStatus);
 module.exports = router;

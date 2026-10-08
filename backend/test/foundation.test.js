@@ -56,9 +56,10 @@ test("only admin can appoint staff and caller cannot appoint another admin", asy
   assert.equal(result.status, 201); assert.equal(result.body.user.role, "staff");
 });
 test("student cannot read staff-wide data; staff can", async () => {
-  for (const endpoint of ["/students", "/transfers", "/subjects", "/mappings/transfer/0123456789abcdef01234567", "/previous-subjects/transfer/0123456789abcdef01234567"]) {
+  for (const endpoint of ["/students", "/subjects", "/mappings/transfer/0123456789abcdef01234567", "/previous-subjects/transfer/0123456789abcdef01234567"]) {
     assert.equal((await request(endpoint, "GET", undefined, studentToken)).status, 403);
   }
+  assert.deepEqual((await request("/transfers", "GET", undefined, studentToken)).body.transfers, []);
   assert.equal((await request("/students", "GET", undefined, staffToken)).status, 200);
   assert.equal((await request("/students")).status, 401);
 });

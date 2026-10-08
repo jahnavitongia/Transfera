@@ -15,8 +15,8 @@ const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
 app.disable("x-powered-by");
 app.use(cors({ origin: clientUrl, credentials: true }));
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(express.json({ limit: "4mb" }));
+app.use(express.urlencoded({ extended: true, limit: "4mb" }));
 
 app.get("/api/health", (req, res) => {
   const databaseConnected = mongoose.connection.readyState === 1;
@@ -31,6 +31,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/test", testRoutes);
+app.use("/api/profile", require("./routes/profileRoutes"));
 app.use("/api/students", studentRoutes);
 app.use("/api/transfers", transferRoutes);
 app.use("/api/mappings", mappingRoutes);
@@ -42,6 +43,9 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
+  if (error.code === 11000) return res.status(409).json({ message: "An active request or record already exists" });
+  if (["ValidationError", "CastError"].includes(error.name)) return res.status(400).json({ message: error.message });
+  if (error.type === "entity.too.large") return res.status(413).json({ message: "Uploaded request is too large" });
   console.error(error);
   res.status(500).json({ message: "An unexpected server error occurred" });
 });

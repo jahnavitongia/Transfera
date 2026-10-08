@@ -32,6 +32,12 @@ No password or JWT secret is included in API account responses or committed envi
 
 ## Check and continue
 
-`npm run test` requires local MongoDB. It uses a separate test database.
+`npm run test` requires local MongoDB. It uses separate test databases.
 `npm run lint` and `npm run build` check the frontend.
-See ROADMAP.md for the four steps. Step 1 covers setup/accounts; transfer/cancellation workflows follow.
+Steps 1–2 are complete: accounts, student profile/transcript submission, BCA-to-BCA or BCA-to-BSc comparison, staff review and admin-only decisions. Admission cancellation is step 3.
+
+For a short demo: student signs in → Profile → Use sample profile → Save → Continue → Use sample subjects and transcript → Submit. Staff opens Transfers → Compare subjects → checks course content and record flags → saves review. Admin records the final decision; student sees approved credits and remaining subjects.
+
+Rules live in `backend/config/demoPolicy.js`: semester 3 entry, 4/10 minimum grade, sufficient completed credits, 80% suggested / 50% review name similarity, and a 60-credit cap for the fictional 120-credit degree. Course aliases also suggest matches; staff verifies syllabus content. These are editable sample rules, not institution approval or proof of identity. The 50% cap and academic review approach were informed by the historical [MIT ADT 2016 academic ordinances](https://mituniversity.ac.in/assets_web/pdf/about/Academic_Ordinances_2016.pdf); other demo choices require faculty confirmation.
+
+See ROADMAP.md for the remaining steps.

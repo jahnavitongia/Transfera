@@ -38,8 +38,9 @@ const Dashboard = () => {
     return () => { active = false; };
   }, []);
 
-  const pending = data.transfers.filter((item) => item.status === "pending").length;
+  const pending = data.transfers.filter((item) => ["pending", "under_review"].includes(item.status)).length;
   const approved = data.transfers.filter((item) => item.status === "approved").length;
+  const rejected = data.transfers.filter(item => item.status === "rejected").length;
   const recentTransfers = data.transfers.slice(0, 5);
 
   return (
@@ -74,13 +75,13 @@ const Dashboard = () => {
 
             <article className="panel status-panel">
               <div className="panel-heading"><div><h2>Transfer status</h2><span>Current queue</span></div></div>
-              <div className="status-donut" style={{ "--approved": `${approved / Math.max(data.transfers.length, 1) * 360}deg` }}>
+              <div className="status-donut" style={{ "--approved": `${approved / Math.max(data.transfers.length, 1) * 360}deg`, "--pending-end": `${(approved + pending) / Math.max(data.transfers.length, 1) * 360}deg` }}>
                 <div><strong>{data.transfers.length}</strong><span>Total</span></div>
               </div>
               <div className="status-legend">
                 <div><span className="legend-dot approved" /><p><strong>{approved}</strong>Approved</p></div>
-                <div><span className="legend-dot pending" /><p><strong>{pending}</strong>Pending</p></div>
-              </div>
+                <div><span className="legend-dot pending" /><p><strong>{pending}</strong>Pending / review</p></div>
+              <div><span className="legend-dot rejected" /><p><strong>{rejected}</strong>Rejected</p></div></div>
             </article>
           </section>
         </>

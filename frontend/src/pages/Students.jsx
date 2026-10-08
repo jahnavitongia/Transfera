@@ -24,7 +24,7 @@ const Students = () => {
 
   return (
     <div className="dashboard-page">
-      <header className="page-header"><div><p className="eyebrow">Student records</p><h1>Students</h1><p>Manage all registered student profiles.</p></div><button className="primary-button">Add student</button></header>
+      <header className="page-header"><div><p className="eyebrow">Student records</p><h1>Students</h1><p>Manage all registered student profiles.</p></div></header>
       {loading ? <div className="state-card"><div className="spinner" />Loading students…</div> : error ? <div className="state-card state-error"><span>!</span><h2>Students unavailable</h2><p>{error}</p></div> : (
         <section className="panel table-panel">
           <div className="panel-heading"><div><h2>Student records</h2><span>{students.length} students</span></div></div>
