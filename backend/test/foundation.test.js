@@ -74,3 +74,19 @@ test("invalid account details fail validation and health confirms database", asy
   assert.equal((await request("/auth/register", "POST", { name: "Invalid", email: "bad", password: "short" })).status, 400);
   assert.equal((await request("/health")).body.database, "connected");
 });
+
+
+test("demo login permits both loopback frontend addresses and excludes unrelated origins", async () => {
+  for (const origin of ["http://localhost:5173", "http://127.0.0.1:5173"]) {
+    const response = await fetch(base + "/auth/login", { method: "POST",
+      headers: { "Content-Type": "application/json", Origin: origin },
+      body: JSON.stringify({ email: "admin@example.test", password: "TestPassword123!" }),
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("access-control-allow-origin"), origin);
+  }
+  for (const origin of ["https://example.test", "http://localhost:5174"]) {
+    const response = await fetch(base + "/auth/login", { method: "OPTIONS", headers: { Origin: origin, "Access-Control-Request-Method": "POST" } });
+    assert.equal(response.headers.get("access-control-allow-origin"), null);
+  }
+});

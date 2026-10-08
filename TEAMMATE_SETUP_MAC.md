@@ -53,6 +53,8 @@ Password for all: **TransferaDemo123!**
 - Review: `staff@transfera.demo`
 - Final decisions: `admin@transfera.demo`
 
+If login says **Invalid email or password**, use the exact demo email and password above. A personal account must be registered on this laptop; accounts created on another laptop are not shared. Run the setup check to confirm the demo accounts exist and their logins work.
+
 Each teammate has a separate local database. Next time, repeat only steps 4–6. To stop, press **Control + C** in the frontend, backend, then database Terminal.
 
 If “Unable to connect” appears, check all three Terminals and run step 7. If macOS blocks a downloaded tool, follow Apple's [Open a Mac app from an unknown developer](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac) instructions for the official Node/MongoDB executable; do not disable Gatekeeper. Send error text to the team, never `.env` or tokens.

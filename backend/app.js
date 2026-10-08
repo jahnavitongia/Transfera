@@ -12,9 +12,15 @@ const previousSubjectRoutes = require("./routes/previousSubjectRoutes");
 
 const app = express();
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+const clientOrigins = [clientUrl];
+const localClient = new URL(clientUrl);
+if (["localhost", "127.0.0.1"].includes(localClient.hostname)) {
+  localClient.hostname = localClient.hostname === "localhost" ? "127.0.0.1" : "localhost";
+  clientOrigins.push(localClient.origin);
+}
 
 app.disable("x-powered-by");
-app.use(cors({ origin: clientUrl, credentials: true }));
+app.use(cors({ origin: clientOrigins, credentials: true }));
 app.use(express.json({ limit: "4mb" }));
 app.use(express.urlencoded({ extended: true, limit: "4mb" }));
 

@@ -39,6 +39,8 @@ Password for all: **TransferaDemo123!**
 - Review: `staff@transfera.demo`
 - Final decisions: `admin@transfera.demo`
 
+If login says **Invalid email or password**, use the exact demo email and password above. A personal account must be registered on this laptop; accounts created on another laptop are not shared. Run the setup check to confirm the demo accounts exist and their logins work.
+
 Each teammate has their own local database. Your actions do not appear on another laptop.
 
 ## Next time
