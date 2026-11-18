@@ -16,7 +16,7 @@ export default function StudentProfile() {
     let active = true;
     get("/profile").then(({ data }) => {
       if (!active) return;
-      setPolicy(data.policy);
+      setPolicy({ programs: data.sourcePrograms });
       if (data.student) {
         const student = data.student;
         setForm({ phone: student.phone || "", dateOfBirth: student.dateOfBirth?.slice(0, 10) || "", previousStudentId: student.previousStudentId || "", previousInstitution: student.previousInstitution || "", previousProgram: student.previousProgram || "BCA", admissionYear: student.admissionYear });

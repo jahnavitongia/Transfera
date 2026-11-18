@@ -122,3 +122,32 @@ test("one completed subject cannot cover two destination requirements", () => {
   assert.equal(evaluation.matches.filter(match => match.eligible).length, 1);
   assert.equal(evaluation.matches[1].decision, "not_matched");
 });
+
+test("computing admission validates evidence, snapshots its rules and enforces the remaining allowance", async () => {
+  const { policy, courses, catalog } = require("../config/computingPilot.json");
+  const email = "computing@example.test";
+  await User.create({ name: "Pilot applicant", email, role: "student", password: await bcrypt.hash("TestPassword123!", 4) });
+  const login = await call("/auth/login", "POST", { email, password: "TestPassword123!" });
+  tokens.pilot = login.body.token;
+  const profileResult = await call("/profile", "PUT", { ...profile, previousProgram: policy.sourcePrograms[1] }, "pilot");
+  assert.equal(profileResult.status, 200);
+  await Student.updateOne({ email }, { $set: { priorRecognisedCredits: 76 } });
+  for (const course of catalog) await Subject.create({ ...course, institution: policy.institution, curriculumVersion: policy.curriculumVersion, program: policy.programs[0] });
+  const submit = extra => call("/transfers", "POST", { ...body, gradeScale: "10-point", currentProgram: policy.programs[0], previousSubjects: courses, ...extra }, "pilot");
+  for (const invalid of [{gradeScale:"unknown"}, {transcript:null}, {previousSubjects:[{...courses[0], topics:""}]}]) {
+    assert.equal((await submit(invalid)).status, 400);
+  }
+  const result = await submit({});
+  assert.equal(result.status, 201);
+  assert.equal(result.body.transfer.policyVersion, policy.id);
+  const route = "/transfers/" + result.body.transfer._id;
+  const evaluated = await call(route + "/evaluate", "POST", {}, "staff");
+  assert.equal(evaluated.body.transfer.evaluation.maximumTransferCredits, 4);
+  const review = acceptedCodes => call(route + "/review", "PUT", { acceptedCodes, reviewNotes:"Course evidence checked", clearRecordFlags:true }, "staff");
+  assert.equal((await review(["SOC-101","SOC-201"])).status, 400);
+  assert.equal((await review(["SOC-101"])).status, 200);
+  const decision = await call(route + "/status", "PUT", {status:"approved",remarks:"Within the remaining allowance"}, "admin");
+  assert.equal(decision.body.transfer.summary.awardedCredits, 4);
+  const legacy = await call("/transfers/" + id, "GET", undefined, "admin");
+  assert.equal(legacy.body.transfer.curriculumVersion, "2026-demo");
+});

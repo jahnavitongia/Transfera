@@ -1,0 +1,119 @@
+{
+  "policy": {
+    "id": "SOC-PILOT-2026-01",
+    "label": "School of Computing · Pilot regulations 2026–27",
+    "institution": "MIT School of Computing, Pune",
+    "curriculumVersion": "SOC-CORE-2026-P1",
+    "programs": [
+      "B.Tech. Computer Science and Engineering"
+    ],
+    "sourcePrograms": [
+      "B.Tech. Computer Science and Engineering",
+      "B.Tech. Information Technology"
+    ],
+    "destinationSemesters": [
+      3
+    ],
+    "degreeCredits": 160,
+    "maximumTransferFraction": 0.5,
+    "minimumGradePoint": 4,
+    "suggestedMatchThreshold": 80,
+    "reviewThreshold": 50
+  },
+  "students": [
+    {
+      "name": "Neha Kulkarni",
+      "email": "soc.transfer@transfera.demo",
+      "studentId": "PILOT-T01",
+      "previousStudentId": "PUNE-IT-025",
+      "previousInstitution": "Sahyadri Institute of Computing, Pune (fictional)",
+      "previousProgram": "B.Tech. Information Technology",
+      "dateOfBirth": "2006-03-17",
+      "phone": "9000000111",
+      "admissionYear": 2025
+    },
+    {
+      "name": "Ishan Deshmukh",
+      "email": "soc.cancel@transfera.demo",
+      "studentId": "PILOT-C01",
+      "previousStudentId": "PUNE-CS-031",
+      "previousInstitution": "MIT School of Computing, Pune",
+      "previousProgram": "B.Tech. Computer Science and Engineering",
+      "dateOfBirth": "2006-07-22",
+      "phone": "9000000112",
+      "admissionYear": 2025
+    }
+  ],
+  "courses": [
+    {
+      "code": "P101",
+      "name": "Programming Fundamentals",
+      "kind": "Theory",
+      "credits": 4,
+      "gradePoint": 8,
+      "semester": 1,
+      "topics": "Trace conditional branches and loops. Decompose a problem into functions."
+    },
+    {
+      "code": "P102",
+      "name": "Engineering Mathematics I",
+      "kind": "Theory",
+      "credits": 4,
+      "gradePoint": 3,
+      "semester": 1,
+      "topics": "Solve linear systems using matrices. Interpret derivatives in engineering problems."
+    },
+    {
+      "code": "P201",
+      "name": "Data Structures Lab",
+      "kind": "Lab",
+      "credits": 2,
+      "gradePoint": 7,
+      "semester": 2,
+      "topics": "Implement a stack and a queue. Test insertion and deletion on linked lists."
+    },
+    {
+      "code": "P202",
+      "name": "Database Systems",
+      "kind": "Theory",
+      "credits": 2,
+      "gradePoint": 8,
+      "semester": 2,
+      "topics": "Design relational tables. Write joins and explain normalisation."
+    }
+  ],
+  "catalog": [
+    {
+      "code": "SOC-101",
+      "name": "Programming Fundamentals",
+      "kind": "Theory",
+      "credits": 4,
+      "semester": 1,
+      "topics": "Design functions and trace selection and iteration."
+    },
+    {
+      "code": "SOC-102",
+      "name": "Engineering Mathematics I",
+      "kind": "Theory",
+      "credits": 4,
+      "semester": 1,
+      "topics": "Solve matrix equations and differentiate functions."
+    },
+    {
+      "code": "SOC-201",
+      "name": "Data Structures Lab",
+      "kind": "Lab",
+      "credits": 2,
+      "semester": 2,
+      "topics": "Build and test stacks, queues and linked lists."
+    },
+    {
+      "code": "SOC-202",
+      "name": "Database Management Systems",
+      "kind": "Theory",
+      "credits": 4,
+      "semester": 2,
+      "topics": "Model relational data, normalise tables and query joins."
+    }
+  ]
+}

@@ -21,18 +21,33 @@ export default function NewTransfer() {
   const [program, setProgram] = useState("BCA");
   const [reason, setReason] = useState("");
   const [courses, setCourses] = useState([blankCourse()]);
+  const [gradeScale, setGradeScale] = useState("");
+  const [pilotCourses, setPilotCourses] = useState(null);
   const [transcript, setTranscript] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
-    get("/profile").then(({ data }) => { if (active) { setProfile(data.student); setPolicy(data.policy); } })
+    get("/profile").then(({ data }) => { if (active) { setProfile(data.student); setPolicy(data.policy); setProgram(data.policy.programs[0]); setPilotCourses(data.sampleCourses || null); } })
       .catch(requestError => { if (active) setError(requestError.response?.data?.message || "Unable to load profile"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
   const updateCourse = (index, key, value) => setCourses(current => current.map((course, position) => position === index ? { ...course, [key]: value } : course));
   const samples = async () => {
+    if (pilotCourses) {
+      try {
+        const response = await fetch("/records/computing-evidence.pdf");
+        if (!response.ok) throw new Error();
+        const pdf = await response.blob();
+        setTranscript(await readFile(new File([pdf], "computing-evidence.pdf", { type: "application/pdf" })));
+        setGradeScale("10-point");
+        setCourses(pilotCourses.map(course => ({ ...course })));
+        setReason("Continuing undergraduate computing studies in Pune after completing semesters 1 and 2.");
+        setError("");
+      } catch { setError("Could not load the sample marks statement. Please retry."); }
+      return;
+    }
     setCourses(sampleCourses.map(course => ({ ...course }))); setReason("Relocation and continuation of undergraduate study.");
     const text = `FICTIONAL DEMO TRANSCRIPT — NOT AN OFFICIAL RECORD\nStudent: ${profile.name}\nPrevious institution: ${profile.previousInstitution}\nProgram: ${profile.previousProgram}\n` + sampleCourses.map(course => `${course.code}: ${course.name}; credits ${course.credits}; grade ${course.gradePoint}/10`).join("\n");
     setTranscript(await readFile(new File([text], "sample-transcript.txt", { type: "text/plain" })));
@@ -46,7 +61,7 @@ export default function NewTransfer() {
   const submit = async event => {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const response = await post("/transfers", { currentProgram: program, destinationSemester: 3, transferReason: reason, previousSubjects: courses, transcript });
+      const response = await post("/transfers", { currentProgram: program, destinationSemester: 3, gradeScale, transferReason: reason, previousSubjects: courses, transcript });
       navigate(`/dashboard/transfers/${response.data.transfer._id}`);
     } catch (requestError) { setError(requestError.response?.data?.message || "Unable to submit transfer"); }
     finally { setBusy(false); }
@@ -62,15 +77,18 @@ export default function NewTransfer() {
     <form className="panel transfer-form" onSubmit={submit}>
       <fieldset disabled={busy}><legend>Destination and completed subjects</legend>
         <div className="form-grid"><label>Destination program<select value={program} onChange={event => setProgram(event.target.value)}>{policy.programs.map(value => <option key={value}>{value}</option>)}</select></label><label>Destination semester<input value="3" readOnly /></label></div>
+        {policy.id && <label>Transcript grading scale<select required value={gradeScale} onChange={event => setGradeScale(event.target.value)}>
+          <option value="">Select the scale on your transcript</option><option value="10-point">10-point grade scale</option><option value="other">Other or unconfirmed</option>
+        </select></label>}
         <label>Reason for transfer<textarea required maxLength={1000} value={reason} onChange={event => setReason(event.target.value)} /></label>
-        <div className="section-actions"><h2>Completed subjects</h2><button type="button" className="secondary-button" onClick={samples}>Use sample subjects and transcript</button></div>
-        <p className="muted">Sample data includes a failed grade and a credit shortfall to demonstrate review.</p>
+        <div className="section-actions"><h2>Completed subjects</h2>{(!policy.id || pilotCourses) && <button type="button" className="secondary-button" onClick={samples}>Use sample subjects and transcript</button>}</div>
+        {pilotCourses && <p><a className="table-link" href="/records/computing-evidence.pdf" target="_blank" rel="noreferrer">Open sample marks statement and syllabus ↗</a></p>}
         {courses.map((course, index) => <div className="course-entry" key={index}><div className="form-grid course-grid">
           <label>Code<input required value={course.code} onChange={event => updateCourse(index, "code", event.target.value)} /></label>
           <label>Subject name<input required value={course.name} onChange={event => updateCourse(index, "name", event.target.value)} /></label>
           <label>Credits<input type="number" required min="1" max="30" step="1" value={course.credits} onChange={event => updateCourse(index, "credits", event.target.value)} /></label>
           <label>Grade points / 10<input type="number" required min="0" max="10" step="0.1" value={course.gradePoint} onChange={event => updateCourse(index, "gradePoint", event.target.value)} /></label>
-        </div><label>Topics studied<input maxLength={2000} value={course.topics} onChange={event => updateCourse(index, "topics", event.target.value)} /></label>
+        </div>{policy.id && <label>Teaching format<select required value={course.kind || ""} onChange={event => updateCourse(index, "kind", event.target.value)}><option value="">Select format</option><option>Theory</option><option>Lab</option></select></label>}<label>Topics studied<input required={Boolean(policy.id)} maxLength={2000} value={course.topics} onChange={event => updateCourse(index, "topics", event.target.value)} /></label>
         {courses.length > 1 && <button type="button" className="text-button" onClick={() => setCourses(current => current.filter((_, position) => position !== index))}>Remove subject {index + 1}</button>}</div>)}
         <button type="button" className="secondary-button" disabled={courses.length >= 30} onClick={() => setCourses([...courses, blankCourse()])}>Add subject</button>
         <label>Transcript (PDF or text, up to 2 MB)<input type="file" accept=".pdf,.txt" onChange={upload} /></label>

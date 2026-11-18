@@ -1,6 +1,6 @@
 const natural = require("natural");
 const { calculateSimilarity } = require("./subjectMapping");
-const policy = require("../config/demoPolicy");
+const legacyPolicy = require("../config/demoPolicy");
 const aliases = {
   "dbms": "database management systems", "database systems": "database management systems",
   "intro to programming": "programming fundamentals", "introduction to programming": "programming fundamentals",
@@ -18,7 +18,7 @@ const summarize = (evaluation) => {
     reviewRequired: matches.filter(item => ["suggested", "review_required"].includes(item.decision)).length,
   };
 };
-const buildEvaluation = (previousSubjects, currentSubjects, evaluator) => {
+const buildEvaluation = (previousSubjects, currentSubjects, evaluator, policy = legacyPolicy, priorCredits = 0) => {
   const used = new Set();
   const matches = currentSubjects.map(current => {
     const candidates = previousSubjects.map((previous, index) => ({ previous, index,
@@ -28,9 +28,10 @@ const buildEvaluation = (previousSubjects, currentSubjects, evaluator) => {
     const hasMatch = best && best.similarity >= policy.reviewThreshold;
     if (hasMatch) used.add(best.index);
     const previous = hasMatch ? best.previous : null;
-    const eligible = Boolean(previous && previous.gradePoint >= policy.minimumGradePoint && previous.credits >= current.credits);
+    const formatMatches = !policy.id || (previous?.kind === current.kind && Boolean(current.kind));
+    const eligible = Boolean(formatMatches && previous && previous.gradePoint >= policy.minimumGradePoint && previous.credits >= current.credits);
     const strong = eligible && best.similarity >= policy.suggestedMatchThreshold;
-    const reason = !previous ? "No matching completed subject" : previous.gradePoint < policy.minimumGradePoint ? "Grade is below the sample pass requirement" : previous.credits < current.credits ? "Completed credits are below destination credits" : strong ? "Name match; staff must verify subject content" : "Partial name match; staff must compare subject content";
+    const reason = !previous ? "No matching completed subject" : !formatMatches ? "Teaching format differs (theory / lab)" : previous.gradePoint < policy.minimumGradePoint ? "Grade is below the sample pass requirement" : previous.credits < current.credits ? "Completed credits are below destination credits" : strong ? "Name match; staff must verify subject content" : "Partial name match; staff must compare subject content";
     return { currentSubject: current._id, currentCode: current.code, currentName: current.name,
       currentCredits: current.credits, currentTopics: current.topics,
       previousCode: previous?.code || "", previousName: previous?.name || "",
@@ -38,7 +39,7 @@ const buildEvaluation = (previousSubjects, currentSubjects, evaluator) => {
       previousTopics: previous?.topics || "", similarity: previous ? best.similarity : 0,
       eligible, reason, decision: !previous || !eligible ? "not_matched" : strong ? "suggested" : "review_required", awardedCredits: 0 };
   });
-  return { policyLabel: policy.label, maximumTransferCredits: policy.degreeCredits * policy.maximumTransferFraction,
+  return { policyLabel: policy.label, maximumTransferCredits: Math.max(0, Math.floor(policy.degreeCredits * policy.maximumTransferFraction) - priorCredits),
     evaluatedAt: new Date(), evaluatedBy: evaluator, matches,
     totalDestinationCredits: currentSubjects.reduce((sum, subject) => sum + subject.credits, 0) };
 };

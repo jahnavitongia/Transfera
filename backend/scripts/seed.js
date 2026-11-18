@@ -45,6 +45,16 @@ const seed = async () => {
     ["BSC201", "Data Structures", 4, "BSc Computer Science", 2, "Lists, stacks, queues, trees, sorting"],
     ["BSC202", "Computer Architecture", 4, "BSc Computer Science", 2, "CPU, memory, instruction sets, digital logic"],
   ]) await Subject.updateOne({ code }, { $set: { code, name, credits, program, semester, topics, institution: "Sample University B", curriculumVersion: "2026-demo" } }, { upsert: true });
+  const pilot = require("../config/computingPilot.json");
+  for (const profile of pilot.students) {
+    const { name, email } = profile;
+    const user = await User.findOneAndUpdate({ email }, { $setOnInsert: { name, email, role: "student", password } }, { upsert: true, returnDocument: "after" });
+    await Student.updateOne({ studentId: profile.studentId }, { $setOnInsert: { ...profile, user: user._id, currentProgram: profile.previousProgram } }, { upsert: true });
+  }
+  for (const course of pilot.catalog) {
+    const { institution, curriculumVersion, programs } = pilot.policy;
+    await Subject.updateOne({ code: course.code, curriculumVersion }, { $set: { ...course, program: programs[0], institution, curriculumVersion } }, { upsert: true });
+  }
   console.log("Sample accounts and curriculum ready. Password: TransferaDemo123!");
 };
 seed().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => mongoose.disconnect());

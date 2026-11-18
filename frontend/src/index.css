@@ -128,3 +128,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }.status.active { color: #08
 
 .status.catalog { color: #475467; background: #f2f4f7; }
 .status-donut { background: conic-gradient(#22c55e 0 var(--approved), #fbbf24 var(--approved) var(--pending-end), #ef4444 var(--pending-end) 360deg); }.legend-dot.rejected { background: #ef4444; }
+
+.campus-brand { align-items: flex-start; flex-direction: column; }
+.sidebar-wordmark { width: 148px; height: auto; background: white; padding: 4px; border-radius: 3px; }
+.campus-brand span { font-size: 13px; color: #d6cfdf; }

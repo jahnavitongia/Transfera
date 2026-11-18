@@ -33,9 +33,9 @@ const Layout = () => {
     <div className="app-shell">
       <aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-top">
-          <div className="brand">
-            <div className="brand-mark" aria-hidden="true">T</div>
-            <div><strong>Transfera</strong><span>Academic operations</span></div>
+          <div className="brand campus-brand">
+            <img className="sidebar-wordmark" src="/mit-adt-logo.png" alt="MIT-ADT University, Pune" />
+            <div><strong>Transfera</strong><span>School of Computing · Pilot</span></div>
           </div>
           <button className="sidebar-close" aria-label="Close menu" onClick={() => setMobileOpen(false)}>×</button>
         </div>

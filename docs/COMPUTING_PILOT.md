@@ -47,3 +47,9 @@ Feasibility gate: compare with the existing matcher on 12 labelled sample pairs,
 | 4. Presentation release | Clean setup, isolated reset, two demo accounts plus staff/admin, recorded fallback and updated jury deck | Rehearse from a fresh login, reset and repeat, verify final credit and cancellation outcomes; publish verified commit |
 
 The first implementation priority is the AI comparison, alongside its policy and evidence prerequisites. Prototype inference early in Phase 1 so download, latency and packaging issues surface before the interface work. Reserve the last hour for rehearsal. Shared production hosting, live identity verification, OCR, payments and multi-university integrations follow the pilot.
+
+## Phase 1 verification
+
+The seed includes a fictional IT transfer into semester 3 of B.Tech. CSE and a separate CSE cancellation applicant. The marks statement and syllabus derive from `backend/config/computingPilot.json`; rebuild the PDF using `scripts/build-pilot-evidence.py` with ReportLab. The configured degree total is 160 credits and the ceiling is 80 including prior recognised credits. This four-subject catalog covers the pilot review, not the full degree.
+
+An isolated Node/CPU trial used Transformers.js 3.8.1 and quantized Xenova/all-MiniLM-L6-v2 revision 751bff37182d3f1213fa05d7196b954e230abad9, with remote model loading disabled. Four short paraphrases (tree traversal, SQL, matrix algebra and stack operations) each ranked the corresponding passage first among four options. One run loaded the local model in 288 ms and encoded and ranked four queries against cached destination vectors in 14 ms. These are preliminary laptop measurements. The staff screen currently uses the existing title/alias comparison. Integration and the larger evaluation belong to Phase 2.

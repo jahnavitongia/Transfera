@@ -48,9 +48,16 @@ export default function TransferDetail() {
     <Link className="table-link" to="/dashboard/transfers">← All requests</Link>
     <header className="page-header"><div><p className="eyebrow">TR-{record._id.slice(-6).toUpperCase()}</p><h1>Transfer request</h1><p>{record.student?.name} · {record.previousProgram} → {record.currentProgram}</p></div><span className={`status large-status ${record.status}`}>{record.status.replaceAll("_", " ")}</span></header>
     {error && <p role="alert" className="error-message">{error}</p>}{message && <p role="status" className="success-message">{message}</p>}
-    <section className="panel details-panel"><h2>Application details</h2><div className="form-grid"><p><strong>From:</strong> {record.previousInstitution}</p><p><strong>To:</strong> {record.destinationInstitution}</p><p><strong>Entry:</strong> Semester {record.destinationSemester}</p><p><strong>Curriculum:</strong> {record.curriculumVersion}</p></div><p><strong>Reason:</strong> {record.transferReason}</p><button className="secondary-button" onClick={viewTranscript}>View transcript</button>
+    <section className="panel details-panel"><h2>Application details</h2><div className="form-grid"><p><strong>From:</strong> {record.previousInstitution}</p><p><strong>To:</strong> {record.destinationInstitution}</p><p><strong>Entry:</strong> Semester {record.destinationSemester}</p><p><strong>Curriculum:</strong> {record.curriculumVersion}</p>{record.policyVersion && <p><strong>Policy:</strong> {record.policyVersion}</p>}</div><p><strong>Reason:</strong> {record.transferReason}</p><button className="secondary-button" onClick={viewTranscript}>View transcript</button>
       {documentText !== null && <pre className="transcript-preview">{documentText}</pre>}{pdfUrl && <iframe className="pdf-preview" title="Submitted transcript" src={pdfUrl} />}
     </section>
+    {record.policyVersion && !record.evaluation?.evaluatedAt && <section className="panel details-panel">
+      <h2>Submitted academic record</h2>
+      <p>{record.gradeScale} grading scale · {record.transcript.fileName}</p>
+      <div className="table-wrap"><table><thead><tr><th>Course</th><th>Format</th><th>Credits</th><th>Grade / 10</th></tr></thead>
+        <tbody>{record.previousSubjects.map(course => <tr key={course.code}><td>{course.code} · {course.name}</td><td>{course.kind}</td><td>{course.credits}</td><td>{course.gradePoint}</td></tr>)}</tbody>
+      </table></div>
+    </section>}
     {record.recordCheck.flagCount > 0 && <section className="notice"><h2>Possible duplicate record</h2><p>{record.recordCheck.cleared ? "Staff has reviewed the record flags." : "Record verification is required. This flag is not proof of fraud."}</p>{reviewer && record.duplicateFlags.map(flag => <p key={flag._id}>{flag.name}: {flag.reason}</p>)}</section>}
     <section className="panel details-panel"><div className="section-actions"><h2>Subject comparison</h2>{reviewer && open && !record.evaluation?.evaluatedAt && <button disabled={busy} className="primary-button" onClick={() => action(() => post(`/transfers/${id}/evaluate`, {}), "Comparison saved. Review the suggested matches below.")}>Compare subjects</button>}</div>
       {!record.evaluation?.evaluatedAt ? <p className="muted">Your submitted subjects are awaiting academic review. Credits have not been approved.</p> : <>

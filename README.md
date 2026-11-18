@@ -23,6 +23,12 @@ Open http://localhost:5173. To check setup:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Check-Demo.ps1
 ```
 
+## School of Computing pilot
+
+Start the demo to seed the pilot accounts. Use `soc.transfer@transfera.demo` for the semester 3 computing transfer and `soc.cancel@transfera.demo` for cancellation. Both use the presentation password below. Staff and admin use the existing accounts.
+
+In **New transfer**, choose **Use sample subjects and transcript** to attach the fictional two-page marks statement and syllabus. The expected outcome is 6 recognised credits after final approval. The pilot catalog covers four requirements across semesters 1 and 2. The earlier BCA workflow remains available.
+
 ## Presentation accounts
 
 All use password `TransferaDemo123!` for this local fictional demo.

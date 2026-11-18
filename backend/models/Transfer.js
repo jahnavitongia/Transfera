@@ -4,6 +4,7 @@ const previousCourse = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   credits: { type: Number, required: true, min: 1, max: 30 },
   gradePoint: { type: Number, required: true, min: 0, max: 10 },
+  kind: { type: String, enum: ["Theory", "Lab"] },
   topics: { type: String, default: "", maxlength: 2000 },
 }, { _id: false });
 const match = new mongoose.Schema({
@@ -22,6 +23,7 @@ const schema = new mongoose.Schema({
   currentProgram: { type: String, required: true, trim: true },
   destinationInstitution: { type: String, required: true },
   destinationSemester: { type: Number, required: true },
+  gradeScale: String, policyVersion: String, policySnapshot: mongoose.Schema.Types.Mixed, priorRecognisedCredits: Number,
   curriculumVersion: { type: String, required: true },
   transferReason: { type: String, required: true, trim: true, maxlength: 1000 },
   previousSubjects: { type: [previousCourse], required: true },

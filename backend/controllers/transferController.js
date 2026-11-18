@@ -4,6 +4,7 @@ const Student = require("../models/student");
 const Subject = require("../models/Subject");
 const { reserveRequest, releaseRequest } = require("../services/admissionWorkflow");
 const policy = require("../config/demoPolicy");
+const { forStudent } = require("../config/policies");
 const { buildEvaluation, summarize, findDuplicateFlags } = require("../services/transferMapping");
 
 const serialize = (transfer, user) => {
@@ -32,6 +33,7 @@ const createTransfer = async (req, res, next) => {
     if (!student?.dateOfBirth || !student.previousStudentId) return res.status(400).json({ message: "Complete your student profile first" });
     if (student.admissionStatus === "cancelled") return res.status(409).json({ message: "A cancelled admission cannot submit a transfer" });
     if (await Transfer.exists({ student: student._id, status: "approved" })) return res.status(409).json({ message: "Your demo transfer is already completed" });
+    const policy = forStudent(student);
     const { currentProgram, destinationSemester, transferReason, previousSubjects, transcript } = req.body;
     if (!policy.programs.includes(currentProgram) || !policy.destinationSemesters.includes(Number(destinationSemester)) || typeof transferReason !== "string" || !transferReason.trim() ||
         !Array.isArray(previousSubjects) || !previousSubjects.length || previousSubjects.length > 30) {
@@ -41,6 +43,12 @@ const createTransfer = async (req, res, next) => {
         !Number.isInteger(Number(subject.credits)) || Number(subject.credits) < 1 || Number(subject.credits) > 30 ||
         subject.gradePoint === "" || subject.gradePoint == null || !Number.isFinite(Number(subject.gradePoint)) || Number(subject.gradePoint) < 0 || Number(subject.gradePoint) > 10)) {
       return res.status(400).json({ message: "Each subject needs a code, name, positive integer credits and grade points from 0 to 10" });
+    }
+    if (policy.id && req.body.gradeScale !== "10-point") {
+      return res.status(400).json({ message: "Departmental clarification is required for this grading scale. Submit after the 10-point grades have been confirmed." });
+    }
+    if (policy.id && previousSubjects.some(course => !["Theory", "Lab"].includes(course.kind) || typeof course.topics !== "string" || !course.topics.trim())) {
+      return res.status(400).json({ message: "Each course needs its teaching format and syllabus outcomes for academic review" });
     }
     if (new Set(previousSubjects.map(subject => subject.code.trim().toUpperCase())).size !== previousSubjects.length) return res.status(400).json({ message: "Each completed subject code must be unique" });
     if (!transcript || typeof transcript.content !== "string" || !["application/pdf", "text/plain"].includes(transcript.mimeType) || typeof transcript.fileName !== "string") return res.status(400).json({ message: "Attach a PDF or text transcript (up to 2 MB)" });
@@ -52,9 +60,12 @@ const createTransfer = async (req, res, next) => {
     try { transfer = await Transfer.create({ _id: requestId, student: student._id,
       previousInstitution: student.previousInstitution, previousProgram: student.previousProgram,
       currentProgram, destinationSemester: Number(destinationSemester), destinationInstitution: policy.institution,
-      curriculumVersion: policy.curriculumVersion, transferReason: transferReason.trim(),
+      curriculumVersion: policy.curriculumVersion,
+      gradeScale: policy.id ? req.body.gradeScale : undefined, policyVersion: policy.id, policySnapshot: policy.id ? policy : undefined,
+      priorRecognisedCredits: student.priorRecognisedCredits || 0,
+      transferReason: transferReason.trim(),
       previousSubjects: previousSubjects.map(subject => ({ code: subject.code, name: subject.name,
-        credits: Number(subject.credits), gradePoint: Number(subject.gradePoint), topics: subject.topics || "" })),
+        credits: Number(subject.credits), gradePoint: Number(subject.gradePoint), kind: policy.id ? subject.kind : undefined, topics: subject.topics || "" })),
       transcript: { fileName: transcript.fileName.replace(/[^a-zA-Z0-9._ -]/g, "_").slice(0, 100), mimeType: transcript.mimeType, content: transcript.content },
       duplicateFlags: findDuplicateFlags(student, others) });
     } catch (error) { await releaseRequest(student._id, "transfer", requestId); throw error; }
@@ -88,7 +99,7 @@ const evaluateTransfer = async (req, res, next) => {
     const subjects = await Subject.find({ program: transfer.currentProgram, institution: transfer.destinationInstitution,
       curriculumVersion: transfer.curriculumVersion, semester: { $lt: transfer.destinationSemester } }).sort({ semester: 1, code: 1 });
     if (!subjects.length) return res.status(400).json({ message: "No destination curriculum is available" });
-    const evaluation = buildEvaluation(transfer.previousSubjects, subjects, req.user.id);
+    const evaluation = buildEvaluation(transfer.previousSubjects, subjects, req.user.id, transfer.policySnapshot || policy, transfer.priorRecognisedCredits || 0);
     const updated = await Transfer.findOneAndUpdate({ _id: transfer._id, updatedAt: transfer.updatedAt, status: { $in: ["pending", "under_review"] } },
       { $set: { evaluation, status: "under_review", reviewNotes: "", recordCheckCleared: false }, $unset: { reviewedAt: 1, reviewedBy: 1 } }, { returnDocument: "after", runValidators: true });
     if (!updated) return res.status(409).json({ message: "Request changed. Refresh before evaluating" });

@@ -4,6 +4,7 @@ const subjectSchema = new mongoose.Schema(
     {
         institution: { type: String, default: "Sample University B" },
         curriculumVersion: { type: String, default: "2026-demo" },
+        kind: { type: String, enum: ["Theory", "Lab"] },
         topics: { type: String, default: "" },
         code: {
             type: String,

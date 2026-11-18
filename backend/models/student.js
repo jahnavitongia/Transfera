@@ -47,6 +47,7 @@ const studentSchema = new mongoose.Schema(
             trim: true
         },
 
+        priorRecognisedCredits: { type: Number, min: 0, default: 0 },
         admissionYear: {
             type: Number,
             required: true

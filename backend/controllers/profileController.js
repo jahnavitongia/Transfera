@@ -1,12 +1,18 @@
 const Student = require("../models/student");
 const Transfer = require("../models/Transfer");
 const Cancellation = require("../models/Cancellation");
-const policy = require("../config/demoPolicy");
+const { forStudent, sourcePrograms } = require("../config/policies");
+const pilotCase = require("../config/computingPilot.json");
 const withStudentStatus = require("../services/studentStatus");
 const getProfile = async (req, res, next) => {
   try {
     const student = await Student.findOne({ user: req.user.id });
-    res.json({ student: student ? (await withStudentStatus([student]))[0] : null, policy });
+    const policy = forStudent(student);
+    const applicant = pilotCase.students[0];
+    const evidenceFields = ["studentId", "previousStudentId", "name", "previousProgram", "previousInstitution"];
+    const matchesEvidence = student && evidenceFields.every(field => student[field] === applicant[field]);
+    const sampleCourses = matchesEvidence ? pilotCase.courses : undefined;
+    res.json({ sourcePrograms, sampleCourses, student: student ? (await withStudentStatus([student]))[0] : null, policy });
   } catch (error) { next(error); }
 };
 const saveProfile = async (req, res, next) => {
@@ -14,7 +20,7 @@ const saveProfile = async (req, res, next) => {
     const { phone, dateOfBirth, previousStudentId, previousInstitution, previousProgram, admissionYear } = req.body;
     const birth = new Date(dateOfBirth);
     if (typeof phone !== "string" || !/^\d{10}$/.test(phone) || !dateOfBirth || !Number.isFinite(birth.getTime()) || birth >= new Date() ||
-        ![previousStudentId, previousInstitution].every(value => typeof value === "string" && value.trim()) || !policy.programs.includes(previousProgram) ||
+        ![previousStudentId, previousInstitution].every(value => typeof value === "string" && value.trim()) || !sourcePrograms.includes(previousProgram) ||
         !Number.isInteger(Number(admissionYear)) || Number(admissionYear) < 2000 || Number(admissionYear) > new Date().getFullYear()) {
       return res.status(400).json({ message: "Enter a 10-digit phone, valid birth date, previous ID/institution/program, and admission year" });
     }
