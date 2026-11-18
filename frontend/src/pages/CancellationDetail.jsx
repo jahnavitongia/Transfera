@@ -1,3 +1,4 @@
+import RequestReceipt from "../components/RequestReceipt";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { get, put } from "../services/api";
@@ -25,6 +26,7 @@ export default function CancellationDetail() {
     <Link className="table-link" to="/dashboard/cancellations">← All cancellations</Link>
     <header className="page-header"><div><p className="eyebrow">CA-{record._id.slice(-6).toUpperCase()}</p><h1>Cancellation request</h1><p>{record.student?.name} · {record.program}</p></div><span className={`status large-status ${record.status}`}>{record.status.replaceAll("_", " ")}</span></header>
     {error && <p role="alert" className="error-message">{error}</p>}{message && <p role="status" className="success-message">{message}</p>}
+    <RequestReceipt record={record} type="cancellation" />
     <section className="panel details-panel"><h2>Application details</h2><p><strong>Admission:</strong> {record.institution} · {record.program}</p><p><strong>Category:</strong> {record.reasonCategory}</p><p><strong>Student reason:</strong> {record.reason}</p><p className="muted">Received {new Date(record.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST · Student acknowledged the effect of approval.</p></section>
     {open && <p className="notice">Admission remains unchanged while this request is being reviewed.</p>}
     {user.role !== "student" && open && <section className="panel details-panel"><h2>Staff review</h2><form className="review-form" onSubmit={event => { event.preventDefault(); action(`/cancellations/${id}/review`, { recommendation, reviewNotes: notes }, "Staff review saved. An administrator can record the final decision."); }}>
@@ -39,6 +41,5 @@ export default function CancellationDetail() {
       {!record.reviewedAt && <p className="muted">Complete staff review before deciding.</p>}
       <button className="primary-button" disabled={busy || !record.reviewedAt}>Record final decision</button>
     </form></section>}
-    {!open && <section className="panel details-panel"><h2>Final decision: {record.status}</h2><p>{record.status === "approved" ? "This admission is now cancelled." : "This cancellation was rejected. Your admission remains unchanged."}</p><p>{record.decisionReason}</p>{record.status === "approved" && <p>For fee clearance, contact the Accounts office with the request number above.</p>}<p className="muted">{record.processedBy?.name} · {new Date(record.decidedAt).toLocaleString()}</p></section>}
   </div>;
 }

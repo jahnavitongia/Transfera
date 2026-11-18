@@ -38,16 +38,18 @@ const Dashboard = () => {
     return () => { active = false; };
   }, []);
 
-  const pending = data.transfers.filter((item) => ["pending", "under_review"].includes(item.status)).length;
-  const approved = data.transfers.filter((item) => item.status === "approved").length;
-  const rejected = data.transfers.filter(item => item.status === "rejected").length;
-  const recentTransfers = data.transfers.slice(0, 5);
+  const admin = user.role === "admin";
+  const active = [
+    ...data.transfers.map(record => ({ record, type: "Transfer", path: "transfers" })),
+    ...data.cancellations.map(record => ({ record, type: "Cancellation", path: "cancellations" })),
+  ].filter(({ record }) => ["pending", "under_review"].includes(record.status));
+  const queue = active.filter(({ record }) => admin ? Boolean(record.reviewedAt) : !record.reviewedAt)
+    .sort((a, b) => new Date(a.record.createdAt) - new Date(b.record.createdAt));
 
   return (
     <div className="dashboard-page">
       <header className="page-header">
-        <div><p className="eyebrow">Overview</p><h1>Welcome, {user.name}</h1><p>Here is what is happening across student transfers and cancellations today.</p></div>
-        <div className="live-pill"><span /> Demo workspace</div>
+        <div><p className="eyebrow">MIT School of Computing · Pilot</p><h1>{admin ? "Academic decisions" : "Faculty review"}</h1><p>{admin ? "Requests with a recorded staff recommendation are ready for a decision." : "Open a student request to check the evidence and record your recommendation."}</p></div>
       </header>
 
       {loading ? <div className="state-card"><div className="spinner" />Loading dashboard…</div> : error ? (
@@ -58,32 +60,16 @@ const Dashboard = () => {
             <StatCard label="Total students" value={data.students.length} tone="blue" icon="◎" />
             <StatCard label="Transfer requests" value={data.transfers.length} tone="violet" icon="↗" />
             <StatCard label="Cancellation requests" value={data.cancellations.length} tone="green" icon="▤" />
-            <StatCard label="Pending review" value={pending + data.cancellations.filter(item => ["pending", "under_review"].includes(item.status)).length} tone="amber" icon="◷" />
+            <StatCard label={admin ? "Ready for decision" : "Awaiting faculty"} value={queue.length} tone="amber" icon="◷" />
           </section>
 
-          <section className="panel details-panel"><div className="section-actions"><h2>Admission cancellations</h2><Link className="table-link" to="/dashboard/cancellations">Review cancellations →</Link></div><p>{data.cancellations.filter(item => ["pending", "under_review"].includes(item.status)).length} awaiting review · {data.cancellations.filter(item => item.status === "approved").length} approved · {data.cancellations.filter(item => item.status === "rejected").length} rejected</p></section>
-          <section className="dashboard-grid">
-            <article className="panel">
-              <div className="panel-heading"><div><h2>Recent transfers</h2><span>Latest activity</span></div><Link to="/dashboard/transfers">View all →</Link></div>
-              {recentTransfers.length ? <div className="transfer-list">{recentTransfers.map((transfer) => (
-                <div className="transfer-row" key={transfer._id}>
-                  <div className="student-avatar">{transfer.student?.studentId?.slice(0, 2).toUpperCase() || "ST"}</div>
-                  <div className="transfer-details"><strong>{transfer.student?.studentId || "Student"}</strong><span>{transfer.student?.name || transfer.previousInstitution || "Transfer request"}</span></div>
-                  <span className={`status ${transfer.status || "pending"}`}>{transfer.status || "pending"}</span>
-                </div>
-              ))}</div> : <div className="empty-state"><span>⌁</span><h3>No transfers yet</h3><p>Transfer requests will appear here.</p></div>}
-            </article>
-
-            <article className="panel status-panel">
-              <div className="panel-heading"><div><h2>Transfer status</h2><span>Current queue</span></div></div>
-              <div className="status-donut" style={{ "--approved": `${approved / Math.max(data.transfers.length, 1) * 360}deg`, "--pending-end": `${(approved + pending) / Math.max(data.transfers.length, 1) * 360}deg` }}>
-                <div><strong>{data.transfers.length}</strong><span>Total</span></div>
-              </div>
-              <div className="status-legend">
-                <div><span className="legend-dot approved" /><p><strong>{approved}</strong>Approved</p></div>
-                <div><span className="legend-dot pending" /><p><strong>{pending}</strong>Pending / review</p></div>
-              <div><span className="legend-dot rejected" /><p><strong>{rejected}</strong>Rejected</p></div></div>
-            </article>
+          <section className="panel details-panel"><h2>{admin ? "Ready for decision" : "Awaiting faculty review"}</h2>
+            {queue.length ? <ul className="review-queue">{queue.map(({ record, type, path }) =>
+              <li key={record._id}><div><strong>{record.student?.name || "Student"}</strong>
+                <p>{type} · {record.currentProgram || record.program}</p></div>
+                <Link className="table-link" to={`/dashboard/${path}/${record._id}`} aria-label={`Open ${type.toLowerCase()} for ${record.student?.name || "student"}`}>Open request →</Link></li>
+            )}</ul> : <p>No requests are waiting in this queue.</p>}
+            <div className="step-actions"><Link className="table-link" to="/dashboard/transfers">All transfers</Link><Link className="table-link" to="/dashboard/cancellations">All cancellations</Link></div>
           </section>
         </>
       )}

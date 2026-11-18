@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 
@@ -20,6 +20,22 @@ const icons = {
 
 const Layout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const opener = useRef(null);
+  const closeButton = useRef(null);
+  const content = useRef(null);
+  const closeMenu = () => { setMobileOpen(false); requestAnimationFrame(() => opener.current?.focus()); };
+  useEffect(() => {
+    if (!mobileOpen) return;
+    closeButton.current?.focus();
+    const onKey = event => { if (event.key === "Escape") closeMenu(); };
+    const onResize = () => { if (window.innerWidth > 760) setMobileOpen(false); };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [mobileOpen]);
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const items = user.role === "student" ? [navigation[0], { label: "Your profile", to: "/dashboard/profile", icon: "users" }, { label: "Your transfers", to: "/dashboard/transfers", icon: "transfer" }, { label: "Your cancellations", to: "/dashboard/cancellations", icon: "transfer" }] : [...navigation, ...(user.role === "admin" ? [{ label: "Staff accounts", to: "/dashboard/staff", icon: "users" }] : [])];
@@ -31,13 +47,14 @@ const Layout = () => {
 
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}>
+      <a hidden={mobileOpen} className="skip-link" href="#workspace-main">Skip to page content</a>
+      <aside id="workspace-menu" className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}>
         <div className="sidebar-top">
           <div className="brand campus-brand">
             <img className="sidebar-wordmark" src="/mit-adt-logo.png" alt="MIT-ADT University, Pune" />
             <div><strong>Transfera</strong><span>School of Computing · Pilot</span></div>
           </div>
-          <button className="sidebar-close" aria-label="Close menu" onClick={() => setMobileOpen(false)}>×</button>
+          <button className="sidebar-close" aria-label="Close menu" ref={closeButton} onClick={closeMenu}>×</button>
         </div>
 
         <nav className="sidebar-nav" aria-label="Main navigation">
@@ -48,7 +65,7 @@ const Layout = () => {
               to={item.to}
               end={item.to === "/dashboard"}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => { if (mobileOpen) { setMobileOpen(false); requestAnimationFrame(() => content.current?.focus()); } }}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">{icons[item.icon]}</svg>
               {item.label}
@@ -65,13 +82,13 @@ const Layout = () => {
         </div>
       </aside>
 
-      {mobileOpen && <button className="sidebar-overlay" aria-label="Close menu" onClick={() => setMobileOpen(false)} />}
-      <div className="workspace">
+      {mobileOpen && <button className="sidebar-overlay" aria-label="Dismiss menu" tabIndex={-1} onClick={closeMenu} />}
+      <div className="workspace" inert={mobileOpen}>
         <header className="mobile-header">
-          <button className="mobile-menu" aria-label="Open menu" onClick={() => setMobileOpen(true)}>☰</button>
-          <div className="brand compact"><div className="brand-mark">T</div><strong>Transfera</strong></div>
+          <button className="mobile-menu" ref={opener} aria-label="Open menu" aria-controls="workspace-menu" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}>☰</button>
+          <div className="brand compact"><img src="/mit-adt-logo.png" alt="MIT-ADT University, Pune" /><strong>Transfera</strong></div>
         </header>
-        <main className="page-content"><Outlet /></main>
+        <main className="page-content" id="workspace-main" tabIndex={-1} ref={content}><Outlet /></main>
       </div>
     </div>
   );

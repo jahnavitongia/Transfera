@@ -1,3 +1,4 @@
+import RequestReceipt from "../components/RequestReceipt";
 import CourseComparison from "../components/CourseComparison";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -51,6 +52,7 @@ export default function TransferDetail() {
     <Link className="table-link" to="/dashboard/transfers">← All requests</Link>
     <header className="page-header"><div><p className="eyebrow">TR-{record._id.slice(-6).toUpperCase()}</p><h1>Transfer request</h1><p>{record.student?.name} · {record.previousProgram} → {record.currentProgram}</p></div><span className={`status large-status ${record.status}`}>{record.status.replaceAll("_", " ")}</span></header>
     {error && <p role="alert" className="error-message">{error}</p>}{message && <p role="status" className="success-message">{message}</p>}
+    <RequestReceipt record={record} type="transfer" />
     <section className="panel details-panel"><h2>Application details</h2><div className="form-grid"><p><strong>From:</strong> {record.previousInstitution}</p><p><strong>To:</strong> {record.destinationInstitution}</p><p><strong>Entry:</strong> Semester {record.destinationSemester}</p><p><strong>Curriculum:</strong> {record.curriculumVersion}</p>{record.policyVersion && <p><strong>Policy:</strong> {record.policyVersion}</p>}</div><p><strong>Reason:</strong> {record.transferReason}</p><button className="secondary-button" onClick={viewTranscript}>View transcript</button>
       {documentText !== null && <pre className="transcript-preview">{documentText}</pre>}{pdfUrl && <iframe className="pdf-preview" title="Submitted transcript" src={pdfUrl} />}
     </section>
@@ -88,6 +90,5 @@ export default function TransferDetail() {
       {decision === "approved" && !record.reviewedAt && <p className="muted">Complete academic review before approving.</p>}
       <button className="primary-button" disabled={busy || (decision === "approved" && (!record.reviewedAt || !record.summary.reviewedCredits))}>Record final decision</button>
     </form></section>}
-    {!open && <section className="panel details-panel"><h2>Final decision: {record.status}</h2><p>{record.remarks}</p><p className="muted">{record.processedBy?.name || "Administrator"} · {new Date(record.decidedAt).toLocaleString()}</p><p>{record.status === "approved" ? `${record.summary.awardedCredits} credits approved for this transfer.` : "No credits have been awarded by this decision."}</p></section>}
   </div>;
 }

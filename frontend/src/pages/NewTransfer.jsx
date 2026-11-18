@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { get, post } from "../services/api";
 const blankCourse = () => ({ code: "", name: "", credits: 4, gradePoint: 8, topics: "" });
@@ -14,6 +14,10 @@ const readFile = (file) => new Promise((resolve, reject) => {
   reader.onerror = () => reject(new Error("Unable to read transcript")); reader.readAsDataURL(file);
 });
 export default function NewTransfer() {
+  const [step, setStep] = useState(1);
+  const stepHeading = useRef(null);
+  const [fileError, setFileError] = useState("");
+  useEffect(() => { stepHeading.current?.focus(); }, [step]);
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [policy, setPolicy] = useState(null);
@@ -34,7 +38,8 @@ export default function NewTransfer() {
     return () => { active = false; };
   }, []);
   const updateCourse = (index, key, value) => setCourses(current => current.map((course, position) => position === index ? { ...course, [key]: value } : course));
-  const samples = async () => {
+  const loadSamples = async () => {
+    setFileError("");
     if (pilotCourses) {
       try {
         const response = await fetch("/records/computing-evidence.pdf");
@@ -52,14 +57,43 @@ export default function NewTransfer() {
     const text = `FICTIONAL DEMO TRANSCRIPT — NOT AN OFFICIAL RECORD\nStudent: ${profile.name}\nPrevious institution: ${profile.previousInstitution}\nProgram: ${profile.previousProgram}\n` + sampleCourses.map(course => `${course.code}: ${course.name}; credits ${course.credits}; grade ${course.gradePoint}/10`).join("\n");
     setTranscript(await readFile(new File([text], "sample-transcript.txt", { type: "text/plain" })));
   };
+  const samples = async () => {
+    setBusy(true);
+    try { await loadSamples(); }
+    catch { setError("Could not prepare the sample transcript. Please retry."); }
+    finally { setBusy(false); }
+  };
   const upload = async event => {
-    const file = event.target.files[0]; setError(""); setTranscript(null);
+    const file = event.target.files[0]; setFileError(""); setTranscript(null);
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024 || !["application/pdf", "text/plain"].includes(file.type)) { setError("Choose a PDF or text file up to 2 MB"); return; }
-    try { setTranscript(await readFile(file)); } catch (readError) { setError(readError.message); }
+    if (file.size > 2 * 1024 * 1024 || !["application/pdf", "text/plain"].includes(file.type)) { setFileError("Choose a PDF or text file up to 2 MB"); return; }
+    setBusy(true);
+    try { setTranscript(await readFile(file)); } catch (readError) { setFileError(readError.message); }
+    finally { setBusy(false); }
   };
   const submit = async event => {
-    event.preventDefault(); setBusy(true); setError("");
+    event.preventDefault();
+    if (step === 2) {
+      const seen = new Set();
+      for (const [index, course] of courses.entries()) {
+        const code = course.code.trim().toUpperCase();
+        if (!code || seen.has(code)) {
+          const field = event.currentTarget.elements.namedItem(`code-${index}`);
+          field.setCustomValidity(code ? "Each completed subject needs a different code." : "Enter the subject code.");
+          field.reportValidity();
+          field.setCustomValidity("");
+          return;
+        }
+        seen.add(code);
+      }
+    }
+    if (step === 2 && !transcript) {
+      setFileError("Attach a transcript before reviewing your request.");
+      event.currentTarget.elements.transcript.focus();
+      return;
+    }
+    if (step < 3) { setError(""); setStep(step + 1); return; }
+    setBusy(true); setError("");
     try {
       const response = await post("/transfers", { currentProgram: program, destinationSemester: 3, gradeScale, transferReason: reason, previousSubjects: courses, transcript });
       navigate(`/dashboard/transfers/${response.data.transfer._id}`);
@@ -67,34 +101,56 @@ export default function NewTransfer() {
     finally { setBusy(false); }
   };
   if (loading) return <div className="state-card">Loading…</div>;
+  if (!profile && error) return <p role="alert" className="error-message">{error}</p>;
   if (!profile?.dateOfBirth || !profile.previousStudentId) return <div className="state-card"><p>Complete your profile before submitting a transfer. <Link to="/dashboard/profile">Go to profile →</Link></p>{error && <p role="alert">{error}</p>}</div>;
   if (profile.admissionStatus === "cancelled" || profile.transferStatus === "completed") return <div className="state-card">Your admission is {profile.admissionStatus}; a new transfer is unavailable for this demo. <Link to="/dashboard">View dashboard →</Link></div>;
   if (["pending", "under_review"].includes(profile.cancellationStatus)) return <div className="state-card">Complete your active cancellation first. <Link to="/dashboard/cancellations">View cancellation →</Link></div>;
   if (profile.transferStatus === "pending") return <div className="state-card"><p>You already have a transfer under review. <Link to="/dashboard/transfers">View your requests →</Link></p></div>;
   return <div className="dashboard-page">
-    <header className="page-header"><div><p className="eyebrow">Step 2</p><h1>New transfer request</h1><p>{profile.previousInstitution} · {profile.previousProgram} → {policy.institution}</p></div></header>
-    <p className="notice">Sample curriculum {policy.curriculumVersion}. Entry into semester 3; staff will review subjects from semesters 1–2.</p>
+    <header className="page-header"><div><h1>New transfer request</h1></div></header>
+    <ol className="transfer-steps" aria-label="Transfer application progress">
+      {["Profile", "Academic evidence", "Review and submit"].map((label, index) =>
+        <li key={label} aria-current={step === index + 1 ? "step" : undefined}>{index + 1}. {label}</li>)}
+    </ol>
     <form className="panel transfer-form" onSubmit={submit}>
-      <fieldset disabled={busy}><legend>Destination and completed subjects</legend>
-        <div className="form-grid"><label>Destination program<select value={program} onChange={event => setProgram(event.target.value)}>{policy.programs.map(value => <option key={value}>{value}</option>)}</select></label><label>Destination semester<input value="3" readOnly /></label></div>
+      <h2 ref={stepHeading} tabIndex={-1}>{["Check your profile", "Add academic evidence", "Review your request"][step - 1]}</h2>
+      {step === 1 && <section><p><strong>{profile.name}</strong> · {profile.previousStudentId}</p>
+        <p>{profile.previousInstitution} · {profile.previousProgram}</p>
+        <Link className="table-link" to="/dashboard/profile">Edit profile</Link>
+        <p className="notice">Applying to {policy.institution} for entry into semester 3. Faculty review completed subjects from semesters 1 and 2.</p></section>}
+      {step === 2 && <fieldset disabled={busy}><legend>Destination and completed subjects</legend>
+        <div className="form-grid"><label>Destination programme<select value={program} onChange={event => setProgram(event.target.value)}>{policy.programs.map(value => <option key={value}>{value}</option>)}</select></label><label>Destination semester<input value="3" readOnly /></label></div>
         {policy.id && <label>Transcript grading scale<select required value={gradeScale} onChange={event => setGradeScale(event.target.value)}>
           <option value="">Select the scale on your transcript</option><option value="10-point">10-point grade scale</option><option value="other">Other or unconfirmed</option>
-        </select></label>}
+        </select>{gradeScale === "other" && <span className="error-message">Ask faculty to confirm the 10-point conversion before submitting.</span>}</label>}
         <label>Reason for transfer<textarea required maxLength={1000} value={reason} onChange={event => setReason(event.target.value)} /></label>
         <div className="section-actions"><h2>Completed subjects</h2>{(!policy.id || pilotCourses) && <button type="button" className="secondary-button" onClick={samples}>Use sample subjects and transcript</button>}</div>
         {pilotCourses && <p><a className="table-link" href="/records/computing-evidence.pdf" target="_blank" rel="noreferrer">Open sample marks statement and syllabus ↗</a></p>}
         {courses.map((course, index) => <div className="course-entry" key={index}><div className="form-grid course-grid">
-          <label>Code<input required value={course.code} onChange={event => updateCourse(index, "code", event.target.value)} /></label>
+          <label>Code<input name={`code-${index}`} required value={course.code} onChange={event => updateCourse(index, "code", event.target.value)} /></label>
           <label>Subject name<input required value={course.name} onChange={event => updateCourse(index, "name", event.target.value)} /></label>
           <label>Credits<input type="number" required min="1" max="30" step="1" value={course.credits} onChange={event => updateCourse(index, "credits", event.target.value)} /></label>
           <label>Grade points / 10<input type="number" required min="0" max="10" step="0.1" value={course.gradePoint} onChange={event => updateCourse(index, "gradePoint", event.target.value)} /></label>
         </div>{policy.id && <label>Teaching format<select required value={course.kind || ""} onChange={event => updateCourse(index, "kind", event.target.value)}><option value="">Select format</option><option>Theory</option><option>Lab</option></select></label>}<label>Topics studied<input required={Boolean(policy.id)} maxLength={2000} value={course.topics} onChange={event => updateCourse(index, "topics", event.target.value)} /></label>
         {courses.length > 1 && <button type="button" className="text-button" onClick={() => setCourses(current => current.filter((_, position) => position !== index))}>Remove subject {index + 1}</button>}</div>)}
         <button type="button" className="secondary-button" disabled={courses.length >= 30} onClick={() => setCourses([...courses, blankCourse()])}>Add subject</button>
-        <label>Transcript (PDF or text, up to 2 MB)<input type="file" accept=".pdf,.txt" onChange={upload} /></label>
+        <label>Transcript (PDF or text, up to 2 MB)<input name="transcript" aria-invalid={Boolean(fileError)} aria-describedby={fileError ? "transcript-error" : undefined} type="file" accept=".pdf,.txt" onChange={upload} /></label>
         {transcript && <p className="success-message">Attached: {transcript.fileName}</p>}
-        <button className="primary-button" disabled={busy || !transcript}>{busy ? "Submitting…" : "Submit transfer request"}</button>
-      </fieldset>
+        {fileError && <p id="transcript-error" role="alert" className="error-message">{fileError}</p>}
+      </fieldset>}
+      {step === 3 && <section>
+        <p><strong>{profile.name}</strong> · {profile.previousInstitution} · {profile.previousProgram}</p>
+        <p><strong>Destination</strong> · {policy.institution} · {program} · Semester 3</p>
+        <p><strong>Reason</strong> · {reason}</p>
+        <p><strong>Evidence</strong> · {transcript.fileName}{gradeScale && ` · ${gradeScale} scale`}</p>
+        <ul className="review-subjects">{courses.map((course, i) => <li key={i}><strong>{course.code} · {course.name}</strong>
+          <p>{course.credits} credits · Grade {course.gradePoint}/10{course.kind && ` · ${course.kind}`}</p>
+          {course.topics && <p>{course.topics}</p>}</li>)}</ul>
+      </section>}
+      <div className="step-actions">
+        {step > 1 && <button type="button" className="secondary-button" disabled={busy} onClick={() => { setStep(step - 1); setError(""); }}>Back</button>}
+        <button className="primary-button" disabled={busy || (step === 2 && gradeScale === "other")}>{step === 1 ? "Continue to academic evidence" : step === 2 ? "Review request" : busy ? "Submitting…" : "Submit transfer request"}</button>
+      </div>
       {error && <p role="alert" className="error-message">{error}</p>}
     </form>
   </div>;
