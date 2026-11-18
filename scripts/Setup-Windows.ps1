@@ -89,6 +89,8 @@ Push-Location $repoDir
 try {
   & $nodeExe $npmCli run setup
   if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed. Check the error above; rerun setup after fixing it.' }
+  & $nodeExe $npmCli run setup:comparison
+  if ($LASTEXITCODE -ne 0) { Write-Warning 'Course model setup is incomplete. Title comparison and manual review remain available.' }
   & $nodeExe (Join-Path $repoDir 'scripts\init-demo.js')
   if ($LASTEXITCODE -ne 0) { throw 'Configuration setup failed.' }
 } finally { Pop-Location }

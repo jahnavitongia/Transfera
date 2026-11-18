@@ -8,6 +8,7 @@ const aliases = {
 };
 const normalize = (value) => value.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 const canonical = (value) => aliases[normalize(value)] || normalize(value);
+const titleSimilarity = (previous, current) => canonical(previous) === canonical(current) ? 100 : calculateSimilarity(canonical(previous), canonical(current));
 const summarize = (evaluation) => {
   const matches = evaluation?.matches || [];
   const accepted = matches.filter(item => item.decision === "accepted");
@@ -18,11 +19,11 @@ const summarize = (evaluation) => {
     reviewRequired: matches.filter(item => ["suggested", "review_required"].includes(item.decision)).length,
   };
 };
-const buildEvaluation = (previousSubjects, currentSubjects, evaluator, policy = legacyPolicy, priorCredits = 0) => {
+const buildEvaluation = (previousSubjects, currentSubjects, evaluator, policy = legacyPolicy, priorCredits = 0, comparison) => {
   const used = new Set();
-  const matches = currentSubjects.map(current => {
+  const matches = comparison?.matches ?? currentSubjects.map(current => {
     const candidates = previousSubjects.map((previous, index) => ({ previous, index,
-      similarity: canonical(previous.name) === canonical(current.name) ? 100 : calculateSimilarity(canonical(previous.name), canonical(current.name)),
+      similarity: titleSimilarity(previous.name, current.name),
     })).filter(item => !used.has(item.index)).sort((a, b) => b.similarity - a.similarity);
     const best = candidates[0];
     const hasMatch = best && best.similarity >= policy.reviewThreshold;
@@ -39,7 +40,7 @@ const buildEvaluation = (previousSubjects, currentSubjects, evaluator, policy = 
       previousTopics: previous?.topics || "", similarity: previous ? best.similarity : 0,
       eligible, reason, decision: !previous || !eligible ? "not_matched" : strong ? "suggested" : "review_required", awardedCredits: 0 };
   });
-  return { policyLabel: policy.label, maximumTransferCredits: Math.max(0, Math.floor(policy.degreeCredits * policy.maximumTransferFraction) - priorCredits),
+  return { comparisonMethod: comparison?.comparisonMethod, policyLabel: policy.label, maximumTransferCredits: Math.max(0, Math.floor(policy.degreeCredits * policy.maximumTransferFraction) - priorCredits),
     evaluatedAt: new Date(), evaluatedBy: evaluator, matches,
     totalDestinationCredits: currentSubjects.reduce((sum, subject) => sum + subject.credits, 0) };
 };
@@ -52,4 +53,4 @@ const findDuplicateFlags = (student, others) => others.flatMap(other => {
   return [{ student: other._id, name: other.name, similarity,
     reason: sameId ? "Same previous institution and student ID" : `Similar name (${similarity}%) and matching ${sameDate ? "date of birth" : "phone"}` }];
 });
-module.exports = { buildEvaluation, summarize, findDuplicateFlags };
+module.exports = { buildEvaluation, summarize, findDuplicateFlags, titleSimilarity };

@@ -30,12 +30,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Check-Demo.ps1
 
 Expect **SETUP CHECK PASSED**. This checks MongoDB, the API, the frontend and four logins.
 
+Setup also prepares the offline course model. If its download fails, staff can still use title matching and review the syllabus manually. Rerun setup with internet to enable outcome ranking.
+
 ## Sign in
 
 Password for all: **TransferaDemo123!**
 
-- Transfer: `transfer@transfera.demo`
-- Cancellation: `cancellation@transfera.demo`
+- Computing transfer: `soc.transfer@transfera.demo`
+- Computing cancellation: `soc.cancel@transfera.demo`
 - Review: `staff@transfera.demo`
 - Final decisions: `admin@transfera.demo`
 

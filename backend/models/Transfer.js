@@ -7,7 +7,13 @@ const previousCourse = new mongoose.Schema({
   kind: { type: String, enum: ["Theory", "Lab"] },
   topics: { type: String, default: "", maxlength: 2000 },
 }, { _id: false });
+const candidate = new mongoose.Schema({
+  previousCode: String, previousName: String, previousCredits: Number, previousTopics: String,
+  gradePoint: Number, similarity: Number, eligible: Boolean, suggested: Boolean, reason: String,
+  evidence: [new mongoose.Schema({ destination: String, source: String, supported: Boolean, score: Number }, { _id: false })],
+}, { _id: false });
 const match = new mongoose.Schema({
+  candidates: { type: [candidate], default: undefined },
   currentSubject: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
   currentCode: String, currentName: String, currentCredits: Number, currentTopics: String,
   previousCode: String, previousName: String, previousCredits: Number, gradePoint: Number,
@@ -30,7 +36,7 @@ const schema = new mongoose.Schema({
   transcript: { fileName: String, mimeType: String, content: { type: String, select: false } },
   status: { type: String, enum: ["pending", "under_review", "approved", "rejected"], default: "pending" },
   evaluation: {
-    policyLabel: String, maximumTransferCredits: Number, evaluatedAt: Date,
+    comparisonMethod: String, policyLabel: String, maximumTransferCredits: Number, evaluatedAt: Date,
     evaluatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     matches: [match], totalDestinationCredits: Number,
   },

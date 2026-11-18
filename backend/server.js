@@ -10,6 +10,10 @@ const start = async () => {
   await connectDB();
   const port = Number(process.env.PORT) || 5001;
   const server = app.listen(port, "127.0.0.1", () => console.log(`Transfera API: http://127.0.0.1:${port}`));
+  const { localScores } = require("./services/localCourseModel");
+  const { outcomes } = require("./services/courseComparison");
+  const { catalog } = require("./config/computingPilot.json");
+  void localScores([], [...new Set(catalog.flatMap(course => outcomes(course.topics)))]);
   const shutdown = () => server.close(async () => { await mongoose.disconnect(); process.exit(0); });
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);

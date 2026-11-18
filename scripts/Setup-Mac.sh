@@ -31,5 +31,6 @@ fi
 "$NODE_DIR/bin/node" --version
 "$MONGO_DIR/bin/mongod" --version
 npm run setup
+npm run setup:comparison || echo "Course model setup is incomplete. Title comparison and manual review remain available." >&2
 npm run init:demo
 echo "SETUP COMPLETE. Next: bash scripts/Run-Mac.sh database"

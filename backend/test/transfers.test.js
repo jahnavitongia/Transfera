@@ -137,12 +137,26 @@ test("computing admission validates evidence, snapshots its rules and enforces t
   for (const invalid of [{gradeScale:"unknown"}, {transcript:null}, {previousSubjects:[{...courses[0], topics:""}]}]) {
     assert.equal((await submit(invalid)).status, 400);
   }
-  const result = await submit({});
+  const alternateCourse = { ...courses[0], code: "P103", name: "Foundations of Computing" };
+  const result = await submit({ previousSubjects: [...courses, alternateCourse] });
   assert.equal(result.status, 201);
   assert.equal(result.body.transfer.policyVersion, policy.id);
   const route = "/transfers/" + result.body.transfer._id;
   const evaluated = await call(route + "/evaluate", "POST", {}, "staff");
   assert.equal(evaluated.body.transfer.evaluation.maximumTransferCredits, 4);
+  const candidates = evaluated.body.transfer.evaluation.matches[0].candidates;
+  assert.equal(candidates.length, courses.length + 1);
+  assert(candidates[0].evidence.length);
+  const faculty = (acceptedCodes, selections) => call(route + "/review", "PUT", { acceptedCodes, selections, reviewNotes: "Compared both syllabi", clearRecordFlags: true }, "staff");
+  assert.equal((await faculty(["SOC-101"], {"SOC-101": "UNKNOWN"})).status, 400);
+  assert.equal((await faculty(["SOC-101"], {"SOC-101": "P102"})).status, 400);
+  const repeated = await faculty(["SOC-101", "SOC-102"], {"SOC-101": "P101", "SOC-102": "P101"});
+  assert.equal(repeated.status, 400);
+  assert.match(repeated.body.message, /only count/);
+  const alternate = await faculty(["SOC-101"], {"SOC-101": "P103"});
+  assert.equal(alternate.status, 200);
+  assert.equal(alternate.body.transfer.evaluation.matches.find(row => row.currentCode === "SOC-101").previousCode, "P103");
+  await call(route + "/evaluate", "POST", {}, "staff");
   const review = acceptedCodes => call(route + "/review", "PUT", { acceptedCodes, reviewNotes:"Course evidence checked", clearRecordFlags:true }, "staff");
   assert.equal((await review(["SOC-101","SOC-201"])).status, 400);
   assert.equal((await review(["SOC-101"])).status, 200);

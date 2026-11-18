@@ -1,3 +1,4 @@
+import CourseComparison from "../components/CourseComparison";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { get, post, put } from "../services/api";
@@ -9,6 +10,7 @@ export default function TransferDetail() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState([]);
+  const [selections, setSelections] = useState({});
   const [notes, setNotes] = useState("");
   const [flagsChecked, setFlagsChecked] = useState(false);
   const [decision, setDecision] = useState("approved");
@@ -17,6 +19,7 @@ export default function TransferDetail() {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [message, setMessage] = useState("");
   const applyRecord = value => {
+    setSelections({});
     setRecord(value); setNotes(value.reviewNotes || ""); setFlagsChecked(value.recordCheck.cleared);
     setAccepted((value.evaluation?.matches || []).filter(match => ["suggested", "accepted"].includes(match.decision) && match.eligible).map(match => match.currentCode));
   };
@@ -61,10 +64,17 @@ export default function TransferDetail() {
     {record.recordCheck.flagCount > 0 && <section className="notice"><h2>Possible duplicate record</h2><p>{record.recordCheck.cleared ? "Staff has reviewed the record flags." : "Record verification is required. This flag is not proof of fraud."}</p>{reviewer && record.duplicateFlags.map(flag => <p key={flag._id}>{flag.name}: {flag.reason}</p>)}</section>}
     <section className="panel details-panel"><div className="section-actions"><h2>Subject comparison</h2>{reviewer && open && !record.evaluation?.evaluatedAt && <button disabled={busy} className="primary-button" onClick={() => action(() => post(`/transfers/${id}/evaluate`, {}), "Comparison saved. Review the suggested matches below.")}>Compare subjects</button>}</div>
       {!record.evaluation?.evaluatedAt ? <p className="muted">Your submitted subjects are awaiting academic review. Credits have not been approved.</p> : <>
-        <p className="notice">{record.evaluation.policyLabel}. Pass requirement: 4/10; completed credits must cover destination credits. Text matching suggests candidates; staff checks course content. Transfer limit: {record.evaluation.maximumTransferCredits} credits.</p>
+        <p className="notice">{record.evaluation.policyLabel}. Passing grade {record.policySnapshot?.minimumGradePoint ?? 4}/10. Source credits must cover destination credits. Available transfer allowance {record.evaluation.maximumTransferCredits} credits.</p>
         <div className="credit-summary"><span><strong>{record.summary.reviewedCredits}</strong> reviewed credits</span><span><strong>{record.summary.subjectsRemaining.length}</strong> subjects still required</span></div>
-        <div className="table-wrap"><table className="mapping-table"><thead><tr><th>Destination requirement</th><th>Completed subject</th><th>Name similarity</th><th>Review / outcome</th></tr></thead><tbody>{matches.map(match => <tr key={match.currentCode}><td><strong>{match.currentName}</strong><small>{match.currentCode} · {match.currentCredits} credits</small><small>{match.currentTopics}</small></td><td>{match.previousName || "No candidate"}<small>{match.previousName && `${match.previousCredits} credits · grade ${match.gradePoint}/10`}</small><small>{match.previousTopics}</small></td><td>{match.similarity}%</td><td><p>{match.reason}</p>{reviewer && open ? <label className="checkbox-label"><input type="checkbox" checked={accepted.includes(match.currentCode)} disabled={!match.eligible || busy} aria-label={`Accept credit for ${match.currentName}`} onChange={event => setAccepted(current => event.target.checked ? [...current, match.currentCode] : current.filter(code => code !== match.currentCode))} />Accept credit</label> : <strong>{match.decision === "accepted" ? `${match.awardedCredits} credits ${record.status === "approved" ? "approved" : "eligible after review"}` : match.decision === "declined" || match.decision === "not_matched" ? "Still required" : "Awaiting review"}</strong>}</td></tr>)}</tbody></table></div>
-        {reviewer && open && <form className="review-form" onSubmit={event => { event.preventDefault(); action(() => put(`/transfers/${id}/review`, { acceptedCodes: accepted, reviewNotes: notes, clearRecordFlags: flagsChecked }), "Review saved. The request is ready for an administrator's decision."); }}>
+        {record.evaluation.comparisonMethod ? <CourseComparison evaluation={record.evaluation}
+          canReview={reviewer && open} busy={busy} accepted={accepted} selections={selections} approved={record.status === "approved"}
+          onSelect={(code, previousCode) => {
+            setSelections(current => ({ ...current, [code]: previousCode }));
+            setAccepted(current => current.filter(item => item !== code));
+          }}
+          onAccept={(code, checked) => setAccepted(current => checked ? [...current, code] : current.filter(item => item !== code))}
+        /> : <div className="table-wrap"><table className="mapping-table"><thead><tr><th>Destination requirement</th><th>Completed subject</th><th>Name similarity</th><th>Review / outcome</th></tr></thead><tbody>{matches.map(match => <tr key={match.currentCode}><td><strong>{match.currentName}</strong><small>{match.currentCode} · {match.currentCredits} credits</small><small>{match.currentTopics}</small></td><td>{match.previousName || "No candidate"}<small>{match.previousName && `${match.previousCredits} credits · grade ${match.gradePoint}/10`}</small><small>{match.previousTopics}</small></td><td>{match.similarity}%</td><td><p>{match.reason}</p>{reviewer && open ? <label className="checkbox-label"><input type="checkbox" checked={accepted.includes(match.currentCode)} disabled={!match.eligible || busy} aria-label={`Accept credit for ${match.currentName}`} onChange={event => setAccepted(current => event.target.checked ? [...current, match.currentCode] : current.filter(code => code !== match.currentCode))} />Accept credit</label> : <strong>{match.decision === "accepted" ? `${match.awardedCredits} credits ${record.status === "approved" ? "approved" : "eligible after review"}` : match.decision === "declined" || match.decision === "not_matched" ? "Still required" : "Awaiting review"}</strong>}</td></tr>)}</tbody></table></div>}
+        {reviewer && open && <form className="review-form" onSubmit={event => { event.preventDefault(); action(() => put(`/transfers/${id}/review`, { acceptedCodes: accepted, selections, reviewNotes: notes, clearRecordFlags: flagsChecked }), "Review saved. The request is ready for an administrator's decision."); }}>
           <label>Staff review notes<textarea required maxLength={2000} value={notes} onChange={event => setNotes(event.target.value)} placeholder="Describe syllabus checks and any record verification." /></label>
           {record.recordCheck.flagCount > 0 && <label className="checkbox-label"><input type="checkbox" checked={flagsChecked} onChange={event => setFlagsChecked(event.target.checked)} />I reviewed these possible duplicate records.</label>}
           <button className="primary-button" disabled={busy}>Save academic review</button>

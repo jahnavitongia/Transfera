@@ -132,3 +132,14 @@ button:disabled { cursor: not-allowed; opacity: .6; }.status.active { color: #08
 .campus-brand { align-items: flex-start; flex-direction: column; }
 .sidebar-wordmark { width: 148px; height: auto; background: white; padding: 4px; border-radius: 3px; }
 .campus-brand span { font-size: 13px; color: #d6cfdf; }
+
+
+.course-review { border-top: 1px solid #dedbe1; padding: 1rem 0; }
+.course-review header, .course-review select { margin-bottom: .5rem; }
+.course-review header h3 { margin: 0; }
+.course-review header span, .course-review small { color: #514a55; }
+.course-review label:not(.checkbox-label) { display: grid; gap: .35rem; max-width: 44rem; }
+.course-review select { width: 100%; min-width: 0; padding: .6rem; font: inherit; }
+.course-review details { margin: .6rem 0; }
+.course-review summary { cursor: pointer; color: #522963; }
+.course-review .outcome-list { border-left: 3px solid #ba9c57; padding-left: 1rem; }

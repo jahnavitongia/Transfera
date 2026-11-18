@@ -7,6 +7,8 @@ const policy = require("../config/demoPolicy");
 const { forStudent } = require("../config/policies");
 const { buildEvaluation, summarize, findDuplicateFlags } = require("../services/transferMapping");
 
+const { compareCourses, applySelections } = require("../services/courseComparison");
+
 const serialize = (transfer, user) => {
   const value = transfer.toObject ? transfer.toObject() : transfer;
   delete value.transcript?.content;
@@ -99,7 +101,8 @@ const evaluateTransfer = async (req, res, next) => {
     const subjects = await Subject.find({ program: transfer.currentProgram, institution: transfer.destinationInstitution,
       curriculumVersion: transfer.curriculumVersion, semester: { $lt: transfer.destinationSemester } }).sort({ semester: 1, code: 1 });
     if (!subjects.length) return res.status(400).json({ message: "No destination curriculum is available" });
-    const evaluation = buildEvaluation(transfer.previousSubjects, subjects, req.user.id, transfer.policySnapshot || policy, transfer.priorRecognisedCredits || 0);
+    const comparison = transfer.policyVersion ? await compareCourses(transfer.previousSubjects, subjects, transfer.policySnapshot) : undefined;
+    const evaluation = buildEvaluation(transfer.previousSubjects, subjects, req.user.id, transfer.policySnapshot || policy, transfer.priorRecognisedCredits || 0, comparison);
     const updated = await Transfer.findOneAndUpdate({ _id: transfer._id, updatedAt: transfer.updatedAt, status: { $in: ["pending", "under_review"] } },
       { $set: { evaluation, status: "under_review", reviewNotes: "", recordCheckCleared: false }, $unset: { reviewedAt: 1, reviewedBy: 1 } }, { returnDocument: "after", runValidators: true });
     if (!updated) return res.status(409).json({ message: "Request changed. Refresh before evaluating" });
@@ -116,6 +119,10 @@ const reviewTransfer = async (req, res, next) => {
     const { acceptedCodes, reviewNotes, clearRecordFlags } = req.body;
     if (!Array.isArray(acceptedCodes) || new Set(acceptedCodes).size !== acceptedCodes.length || typeof reviewNotes !== "string" || !reviewNotes.trim()) return res.status(400).json({ message: "Choose matches and enter your review notes" });
     const evaluation = transfer.toObject().evaluation;
+    const selectionError = applySelections(evaluation.matches, req.body.selections);
+    if (selectionError) return res.status(400).json({ message: selectionError });
+    const selected = evaluation.matches.filter(match => acceptedCodes.includes(match.currentCode));
+    if (new Set(selected.map(match => match.previousCode)).size !== selected.length) return res.status(400).json({ message: "One completed course can only count towards one requirement" });
     if (acceptedCodes.some(code => !evaluation.matches.some(match => match.currentCode === code && match.eligible))) return res.status(400).json({ message: "Failed grades, insufficient credits and unmatched subjects cannot receive credit" });
     for (const match of evaluation.matches) { match.decision = acceptedCodes.includes(match.currentCode) ? "accepted" : "declined"; match.awardedCredits = match.decision === "accepted" ? match.currentCredits : 0; }
     if (summarize(evaluation).awardedCredits > evaluation.maximumTransferCredits) return res.status(400).json({ message: "Accepted credits exceed the sample transfer limit" });
