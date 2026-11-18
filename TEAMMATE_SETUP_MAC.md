@@ -42,7 +42,7 @@ Open **http://localhost:5173**. Keep all three Terminal windows open.
 bash scripts/Run-Mac.sh check
 ```
 
-Expect **SETUP CHECK PASSED**: database, backend, frontend and four logins work.
+Expect **SETUP CHECK PASSED**: database, backend, frontend and six logins work.
 
 Setup also prepares the offline course model. If its download fails, staff can still use title matching and review the syllabus manually. Rerun setup with internet to enable outcome ranking.
 

@@ -8,11 +8,14 @@ const Transfer = require("../models/Transfer");
 const Cancellation = require("../models/Cancellation");
 const SubjectMapping = require("../models/SubjectMapping");
 const PreviousSubject = require("../models/PreviousSubject");
+const pilot = require("../config/computingPilot.json");
 const root = path.resolve(__dirname, "../..");
+const presentationStudents = [["transfer@transfera.demo", "DEMO-TRANSFER"], ["cancellation@transfera.demo", "DEMO-CANCEL"],
+  ...pilot.students.map(({ email, studentId }) => [email, studentId])];
 
 async function resetDemo({ preview = false } = {}) {
   const students = [];
-  for (const [email, studentId] of [["transfer@transfera.demo", "DEMO-TRANSFER"], ["cancellation@transfera.demo", "DEMO-CANCEL"]]) {
+  for (const [email, studentId] of presentationStudents) {
     const user = await User.findOne({ email, role: "student" });
     const student = user && await Student.findOne({ user: user._id, email, studentId }).lean();
     if (!student) throw new Error(`Expected demo profile missing or ownership does not match: ${email}. Run the demo setup first.`);
@@ -36,6 +39,10 @@ async function resetDemo({ preview = false } = {}) {
   await Transfer.deleteMany(filter);
   await Cancellation.deleteMany(filter);
   await Student.updateMany({ _id: { $in: ids } }, { $set: { admissionStatus: "active", transferStatus: "not_applicable" }, $unset: { activeRequest: 1 } });
+  // Pilot students can edit their profile during a rehearsal; restore the fixture values.
+  for (const profile of pilot.students) {
+    await Student.updateOne({ studentId: profile.studentId, email: profile.email }, { $set: { ...profile, currentProgram: profile.previousProgram } });
+  }
   return { ...summary, backup };
 }
 
@@ -43,12 +50,12 @@ if (require.main === module) {
   require("dotenv").config({ path: path.join(root, "backend/.env"), quiet: true });
   (async () => {
     const mode = process.argv[2];
-    if (!["--preview", "--reset-demo"].includes(mode)) throw new Error("Use --preview or --reset-demo. Reset deletes only the two presentation students' requests.");
+    if (!["--preview", "--reset-demo"].includes(mode)) throw new Error("Use --preview or --reset-demo. Reset deletes only the four presentation students' requests.");
     if (!["127.0.0.1", "localhost"].includes(new URL(process.env.MONGO_URI).hostname)) throw new Error("Reset is restricted to a local demo database.");
     await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 5000 });
     if (mongoose.connection.name !== "transfera_demo") throw new Error("Reset is restricted to the transfera_demo database.");
     const result = await resetDemo({ preview: mode === "--preview" });
-    console.log(`${mode === "--preview" ? "Would remove" : "Removed"}: ${result.transfers} transfer requests and ${result.cancellations} cancellation requests for the two demo students.`);
+    console.log(`${mode === "--preview" ? "Would remove" : "Removed"}: ${result.transfers} transfer requests and ${result.cancellations} cancellation requests for the four presentation students.`);
     if (result.backup) {
       console.log("Request backup: " + result.backup);
       console.log("DEMO RESET COMPLETE. Sign out, then sign in again to record both journeys.");

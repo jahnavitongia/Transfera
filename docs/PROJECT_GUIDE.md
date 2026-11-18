@@ -20,7 +20,7 @@ Account registration and login, administrator-created staff accounts, student pr
 
 ### How to describe the current product
 
-Present this as a functional academic workflow prototype with fictional records and editable sample rules. It is ready to demonstrate the process. It still needs real institutional policies, verified academic data and production safeguards before an institution uses it with real students. AI is future scope, and ABC ID has been excluded from this version.
+Present this as a functional academic workflow prototype with fictional records and editable sample rules. It is ready to demonstrate the process. It still needs real institutional policies, verified academic data and production safeguards before an institution uses it with real students. The School of Computing pilot adds offline syllabus comparison with a local MiniLM model; faculty and the admin still make every decision. ABC ID has been excluded from this version.
 
 ## 2 How a transfer works
 

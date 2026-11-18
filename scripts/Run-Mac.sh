@@ -15,5 +15,7 @@ case "${1:-}" in
     exec npm run backend ;;
   frontend) exec npm run frontend ;;
   check) exec npm run check:demo ;;
-  *) echo "Use: bash scripts/Run-Mac.sh database|backend|frontend|check" >&2; exit 1 ;;
+  reset) exec node backend/scripts/reset-demo.js --reset-demo ;;
+  reset-preview) exec node backend/scripts/reset-demo.js --preview ;;
+  *) echo "Use: bash scripts/Run-Mac.sh database|backend|frontend|check|reset|reset-preview" >&2; exit 1 ;;
 esac

@@ -28,7 +28,7 @@ Wait for **Demo started**. Open http://localhost:5173 in your browser.
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Check-Demo.ps1
 ```
 
-Expect **SETUP CHECK PASSED**. This checks MongoDB, the API, the frontend and four logins.
+Expect **SETUP CHECK PASSED**. This checks MongoDB, the API, the frontend and six logins.
 
 Setup also prepares the offline course model. If its download fails, staff can still use title matching and review the syllabus manually. Rerun setup with internet to enable outcome ranking.
 

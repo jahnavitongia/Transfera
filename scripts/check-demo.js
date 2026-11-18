@@ -19,13 +19,14 @@ const check = (ok, message) => { if (!ok) throw new Error(message); console.log(
   await mongoose.connection.db.admin().ping();
   console.log("OK: MongoDB is reachable");
   const User = require(path.join(root, "backend/models/user"));
-  const accounts = await User.countDocuments({ email: { $in: ["transfer@transfera.demo", "cancellation@transfera.demo", "staff@transfera.demo", "admin@transfera.demo"] } });
-  check(accounts === 4, "Four presentation accounts exist; otherwise run npm run seed");
+  const logins = [["soc.transfer@transfera.demo", "student"], ["soc.cancel@transfera.demo", "student"], ["transfer@transfera.demo", "student"], ["cancellation@transfera.demo", "student"], ["staff@transfera.demo", "staff"], ["admin@transfera.demo", "admin"]];
+  const accounts = await User.countDocuments({ email: { $in: logins.map(([email]) => email) } });
+  check(accounts === logins.length, "Six presentation accounts exist; otherwise run npm run seed");
   const port = Number(process.env.PORT) || 5001;
   const response = await fetch(`http://127.0.0.1:${port}/api/health`, { signal: AbortSignal.timeout(5000) });
   const health = await response.json();
   check(response.ok && health.database === "connected", "Backend health confirms its database connection");
-  for (const [email, role] of [["transfer@transfera.demo", "student"], ["cancellation@transfera.demo", "student"], ["staff@transfera.demo", "staff"], ["admin@transfera.demo", "admin"]]) {
+  for (const [email, role] of logins) {
     const result = await fetch(`http://127.0.0.1:${port}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password: "TransferaDemo123!" }), signal: AbortSignal.timeout(5000) });
     const data = await result.json();
     check(result.ok && data.user?.role === role && Boolean(data.token), `${role} login works for ${email}`);
