@@ -56,9 +56,9 @@ const Login = () => {
     return (
         <div className="login-page">
             <div className="login-card">
-                <div className="login-logo">T</div>
+                <img className="campus-wordmark" src="/mit-adt-logo.png" alt="MIT-ADT University, Pune" />
                 <h1>Transfera</h1>
-                <p className="login-subtitle">Student Transfer Management System</p>
+                <p className="login-subtitle">School of Computing · Admissions pilot</p>
 
                 <form onSubmit={handleSubmit}>
                     {isRegistering && (

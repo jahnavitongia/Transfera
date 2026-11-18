@@ -1,4 +1,8 @@
-# Demo roadmap
+# Transfera roadmap
+
+Current release plan: [School of Computing product pilot](docs/COMPUTING_PILOT.md).
+
+## October demo (completed)
 
 Fixed stack: React/Vite, Express/Node, MongoDB/Mongoose, JWT/bcrypt.
 Local demo; sample data only. AI is future scope. ABC IDs are excluded.
